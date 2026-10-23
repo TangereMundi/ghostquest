@@ -1,0 +1,1023 @@
+<title>GhostQuest!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Karla:wght@400;500;700&family=Share+Tech+Mono&display=swap">
+<!--__APPHEAD__-->
+<style>
+/* Layout: one illustrated world with two physical entrances (stone left, gateway right); every other screen is a translucent panel floating over a dimmed copy of the same artwork. */
+:root {
+  --void: #04060d;
+  --deep: #0a1330;
+  --ice: #bfeaff;
+  --cyan: #47d3ff;
+  --violet: #9677ff;
+  --bone: #e9f3ff;
+  --mute: #8fa6c4;
+  --warn: #ff9d6b;
+  --ok: #6be3b0;
+  --line: rgba(130, 190, 255, .22);
+  --panel: rgba(6, 12, 30, .72);
+  --r-common: #9fb4cc; --r-uncommon: #5fe0c0; --r-rare: #5aa8ff; --r-legendary: #f4cf86;
+  --font-display: 'IM Fell English SC', Georgia, 'Times New Roman', serif;
+  --font-body: 'Karla', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-data: 'Share Tech Mono', ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--void); color: var(--bone); font: 400 16px/1.5 var(--font-body); overflow: hidden; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: var(--cyan); }
+:focus-visible { outline: 2px dashed var(--cyan); outline-offset: 3px; }
+svg.i { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.mono { font-family: var(--font-data); letter-spacing: .04em; }
+.cap { font-family: var(--font-data); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+
+#app { position: relative; height: 100%; overflow: hidden; background: var(--void); }
+
+/* ---------- the world ---------- */
+#backdrop { position: absolute; inset: -6%; background: center / cover no-repeat var(--world-url); filter: blur(16px) brightness(.42) saturate(1.25); transform: scale(1.04); }
+#stage { position: absolute; inset: 0; overflow: hidden; transition: transform .72s cubic-bezier(.55, 0, .85, .35), filter .72s; }
+#stage.zoom { transform: scale(1.6); filter: brightness(1.6) saturate(1.3); }
+#world { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+#world > img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; display: block; user-select: none; -webkit-user-drag: none; }
+.fx { position: absolute; pointer-events: none; mix-blend-mode: screen; }
+.fx.breath { left: 28%; top: 10%; width: 44%; height: 36%; background: radial-gradient(closest-side, rgba(120, 220, 255, .28), transparent 72%); animation: breath 7s ease-in-out infinite; }
+.fx.mist { left: -20%; width: 140%; height: 24%; background: radial-gradient(40% 60% at 25% 50%, rgba(150, 190, 255, .20), transparent 70%), radial-gradient(35% 55% at 70% 45%, rgba(150, 120, 255, .18), transparent 70%); filter: blur(10px); }
+.fx.mist.a { top: 68%; animation: drift 34s linear infinite alternate; }
+.fx.mist.b { top: 80%; opacity: .8; animation: drift 46s linear infinite alternate-reverse; }
+@keyframes breath { 0%, 100% { opacity: .35; transform: scale(.96); } 50% { opacity: 1; transform: scale(1.04); } }
+@keyframes drift { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
+
+.hot { position: absolute; background: none; border: 0; padding: 0; border-radius: 18px; }
+.hot .glow { position: absolute; inset: 6% 8%; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; opacity: .35; transition: opacity .25s, transform .25s, filter .25s; animation: pulse 3.6s ease-in-out infinite; }
+.hot[data-go="ghost"] .glow { background: radial-gradient(closest-side, rgba(150, 190, 255, .85), rgba(150, 119, 255, .45) 55%, transparent 80%); }
+.hot[data-go="explore"] .glow { inset: 22% 16% 22% 16%; background: radial-gradient(closest-side, rgba(71, 211, 255, .6), rgba(71, 211, 255, .15) 60%, transparent 80%); }
+.hot:hover .glow, .hot:focus-visible .glow, .hot.press .glow { opacity: .95; transform: scale(1.12); filter: brightness(1.3); animation-duration: 1.4s; }
+.hot .ring { position: absolute; left: 50%; top: 52%; width: 30%; aspect-ratio: 1; margin: -15% 0 0 -15%; border-radius: 50%; border: 2px solid var(--cyan); opacity: 0; pointer-events: none; }
+.hot.press .ring { animation: ripple .8s ease-out; }
+.hot .tag { position: absolute; left: 50%; bottom: -2%; transform: translateX(-50%); white-space: nowrap; font-family: var(--font-data); font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ice); text-shadow: 0 0 10px #000, 0 0 3px #000; padding: 2px 8px; border-radius: 99px; background: rgba(2, 6, 18, .45); }
+@keyframes pulse { 0%, 100% { opacity: .22; } 50% { opacity: .55; } }
+@keyframes ripple { from { opacity: .9; transform: scale(.4); } to { opacity: 0; transform: scale(3.2); } }
+
+.flash { position: absolute; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; pointer-events: none; opacity: 0; transform: scale(0); z-index: 30; background: radial-gradient(circle, #fff 0 10%, var(--fc, var(--cyan)) 30%, transparent 70%); }
+.flash.on { animation: burst .72s cubic-bezier(.5, 0, .8, .4) forwards; }
+@keyframes burst { from { opacity: 1; transform: scale(0); } to { opacity: 1; transform: scale(170); } }
+
+/* ---------- home overlay ---------- */
+#home-ui { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; padding: 12px 16px 14px; }
+#home-ui > * { pointer-events: auto; }
+.hud { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); object-fit: cover; box-shadow: 0 0 18px rgba(71, 211, 255, .35); flex: none; }
+.lvl { flex: 1; min-width: 0; max-width: 220px; }
+.lvl .row { display: flex; justify-content: space-between; font-family: var(--font-data); font-size: .78rem; color: var(--ice); letter-spacing: .08em; }
+.bar { height: 5px; border-radius: 9px; background: rgba(150, 190, 255, .18); overflow: hidden; margin-top: 4px; }
+.bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--violet)); border-radius: 9px; transition: width .6s; }
+.spacer { flex: 1; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-data); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; padding: 5px 10px; border-radius: 99px; background: rgba(4, 8, 22, .6); border: 1px solid var(--line); color: var(--ice); }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.pill.off i { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+.iconbtn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: rgba(4, 8, 22, .6); border: 1px solid var(--line); color: var(--ice); }
+#wordmark { display: block; width: min(88%, 520px); margin: 14px auto 0; mix-blend-mode: screen; filter: drop-shadow(0 0 14px rgba(120, 220, 255, .55)); animation: shimmer 6s ease-in-out infinite; pointer-events: none; }
+@keyframes shimmer { 0%, 100% { filter: drop-shadow(0 0 10px rgba(120, 220, 255, .35)); } 50% { filter: drop-shadow(0 0 22px rgba(150, 119, 255, .75)); } }
+.hint { pointer-events: none; margin: auto auto 10px; text-align: center; font-size: .86rem; color: var(--ice); text-shadow: 0 0 8px #000, 0 0 3px #000; max-width: 32ch; }
+.dock { display: flex; gap: 8px; justify-content: center; }
+.dock button { flex: 1; max-width: 190px; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 10px; border-radius: 14px; background: rgba(4, 9, 24, .66); border: 1px solid var(--line); color: var(--bone); font-weight: 700; font-size: .9rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.dock button:active { background: rgba(30, 60, 110, .6); }
+
+/* ---------- panels ---------- */
+.panel { position: absolute; inset: 0; display: none; flex-direction: column; opacity: 0; transition: opacity .38s; z-index: 20; background: linear-gradient(180deg, rgba(3, 6, 16, .78), rgba(3, 6, 16, .9)); }
+.panel[data-tint="explore"] { background: radial-gradient(120% 60% at 20% 0, rgba(71, 211, 255, .14), transparent 60%), linear-gradient(180deg, rgba(3, 6, 16, .78), rgba(3, 6, 16, .92)); }
+.panel[data-tint="ghost"] { background: radial-gradient(120% 60% at 80% 0, rgba(150, 119, 255, .22), transparent 60%), linear-gradient(180deg, rgba(3, 6, 16, .78), rgba(3, 6, 16, .92)); }
+.panel.show { display: flex; }
+.panel.open { opacity: 1; }
+.phead { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: rgba(3, 6, 16, .5); }
+.phead h2 { margin: 0; font: 400 1.5rem/1.1 var(--font-display); letter-spacing: .02em; text-wrap: balance; }
+.phead .sub { margin: 2px 0 0; }
+.phead .grow { flex: 1; min-width: 0; }
+.back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 12px 0 6px; border-radius: 12px; background: rgba(4, 9, 24, .7); border: 1px solid var(--line); color: var(--ice); font-weight: 700; font-size: .9rem; }
+.pscroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; padding-bottom: 28px; }
+.col { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.card h3 { margin: 0 0 8px; font: 400 1.15rem/1.2 var(--font-display); letter-spacing: .02em; }
+.card p { margin: 0 0 8px; }
+.card p:last-child { margin-bottom: 0; }
+.muted { color: var(--mute); }
+.small { font-size: .86rem; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px 18px; border-radius: 12px; border: 1px solid var(--line); background: rgba(20, 40, 80, .55); color: var(--bone); font-weight: 700; text-decoration: none; }
+.btn.primary { background: linear-gradient(135deg, rgba(71, 211, 255, .9), rgba(120, 140, 255, .9)); color: #03101c; border-color: transparent; box-shadow: 0 0 22px rgba(71, 211, 255, .35); }
+.btn.violet { background: linear-gradient(135deg, rgba(150, 119, 255, .95), rgba(110, 160, 255, .9)); color: #07061a; border-color: transparent; box-shadow: 0 0 22px rgba(150, 119, 255, .4); }
+.btn.danger { border-color: rgba(255, 157, 107, .6); color: var(--warn); background: rgba(60, 20, 8, .4); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 40px; padding: 6px 14px; border-radius: 99px; background: rgba(4, 9, 24, .6); border: 1px solid var(--line); color: var(--ice); font-family: var(--font-data); font-size: .85rem; }
+.chip[aria-pressed="true"] { background: rgba(71, 211, 255, .22); border-color: var(--cyan); color: #fff; }
+.note { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; font-size: .88rem; line-height: 1.45; background: rgba(255, 157, 107, .09); border: 1px solid rgba(255, 157, 107, .4); color: #ffd9c4; }
+.note.info { background: rgba(71, 211, 255, .08); border-color: rgba(71, 211, 255, .35); color: var(--ice); }
+.note svg { margin-top: 2px; }
+input[type=range] { width: 100%; accent-color: var(--cyan); height: 36px; }
+input[type=text], input[type=number], textarea { width: 100%; background: rgba(2, 5, 14, .7); border: 1px solid var(--line); border-radius: 10px; color: var(--bone); padding: 10px 12px; font: inherit; min-height: 44px; }
+textarea { min-height: 84px; resize: vertical; }
+label.lab { display: block; margin-bottom: 4px; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px dashed rgba(130, 190, 255, .14); }
+.kv:last-child { border-bottom: 0; }
+.kv span:first-child { color: var(--mute); }
+.kv span:last-child { text-align: right; font-family: var(--font-data); min-width: 0; overflow-wrap: anywhere; }
+.status { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-data); font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); background: rgba(4, 9, 24, .6); }
+.status::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--mute); }
+.status[data-s="ready"]::before, .status[data-s="navigating"]::before { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.status[data-s="arrived"]::before { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.status[data-s="cancelled"]::before { background: var(--warn); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 560px) { .two { grid-template-columns: 1fr; } }
+
+/* radar */
+.radarwrap { position: relative; width: min(100%, 380px); aspect-ratio: 1; margin: 0 auto; }
+#radar { width: 100%; height: 100%; display: block; border-radius: 50%; border: 1px solid var(--line); box-shadow: 0 0 36px rgba(71, 211, 255, .18), inset 0 0 40px rgba(71, 211, 255, .08); }
+.radarlabel { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); }
+
+/* ghost tools */
+.emf { display: flex; gap: 6px; margin: 8px 0; }
+.emf i { flex: 1; height: 22px; border-radius: 4px; background: rgba(150, 190, 255, .12); border: 1px solid var(--line); transition: background .15s, box-shadow .15s; }
+.emf i.on { background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+.emf i.on.hi { background: var(--violet); box-shadow: 0 0 14px var(--violet); }
+.emf i.on.max { background: #fff; box-shadow: 0 0 18px #fff; }
+.readout { font-family: var(--font-data); font-size: 2rem; letter-spacing: .06em; color: var(--ice); line-height: 1.1; }
+.sb { font-family: var(--font-data); min-height: 3.2rem; }
+.flog { max-height: 150px; overflow: auto; font-family: var(--font-data); font-size: .85rem; color: var(--ice); display: flex; flex-direction: column; gap: 4px; }
+.sim { color: var(--warn); }
+.noteitem { padding: 8px 0; border-bottom: 1px dashed rgba(130, 190, 255, .14); }
+.noteitem:last-child { border-bottom: 0; }
+
+/* collection */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.item { position: relative; padding: 14px; border-radius: 14px; background: rgba(5, 10, 26, .75); border: 1px solid var(--rc, var(--line)); display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.item.locked { opacity: .55; border-style: dashed; border-color: var(--line); }
+.item .ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--rc, var(--mute)); background: rgba(150, 190, 255, .08); box-shadow: 0 0 16px color-mix(in srgb, var(--rc, transparent) 40%, transparent); }
+.item h4 { margin: 0; font: 400 1.02rem/1.2 var(--font-display); overflow-wrap: anywhere; }
+.rar { font-family: var(--font-data); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--rc, var(--mute)); }
+.item .cnt { position: absolute; top: 12px; right: 12px; font-family: var(--font-data); font-size: .8rem; color: var(--mute); }
+.r-common { --rc: var(--r-common); } .r-uncommon { --rc: var(--r-uncommon); } .r-rare { --rc: var(--r-rare); } .r-legendary { --rc: var(--r-legendary); }
+.qrow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px dashed rgba(130, 190, 255, .14); }
+.qrow:last-child { border-bottom: 0; }
+.qrow .tick { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; flex: none; color: #03101c; }
+.qrow.done .tick { background: var(--ok); border-color: var(--ok); }
+.hrow { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed rgba(130, 190, 255, .14); font-size: .92rem; flex-wrap: wrap; }
+.tagm { font-family: var(--font-data); font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--ice); }
+.tagm.demo { color: var(--warn); border-color: rgba(255, 157, 107, .5); }
+
+/* modal + toast */
+#modal { position: absolute; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(2, 4, 12, .78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+#modal.show { display: flex; }
+.reveal { width: min(100%, 380px); text-align: center; padding: 26px 22px; border-radius: 20px; background: rgba(6, 12, 30, .94); border: 1px solid var(--rc, var(--line)); box-shadow: 0 0 60px color-mix(in srgb, var(--rc, #47d3ff) 40%, transparent); animation: rise .5s ease-out; }
+.reveal .ico { width: 74px; height: 74px; margin: 0 auto 10px; border-radius: 50%; display: grid; place-items: center; color: var(--rc); background: rgba(150, 190, 255, .08); box-shadow: 0 0 34px color-mix(in srgb, var(--rc) 55%, transparent); }
+.reveal .ico svg { width: 38px; height: 38px; }
+.reveal h3 { margin: 4px 0; font: 400 1.6rem/1.15 var(--font-display); text-wrap: balance; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+#toast { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 60; max-width: min(92%, 420px); padding: 10px 16px; border-radius: 12px; background: rgba(8, 16, 38, .95); border: 1px solid var(--line); color: var(--bone); font-size: .9rem; opacity: 0; pointer-events: none; transition: opacity .3s; text-align: center; }
+#toast.on { opacity: 1; }
+
+/* splash */
+#splash { position: absolute; inset: 0; z-index: 80; display: grid; place-items: center; background: var(--void); transition: opacity .7s; }
+#splash.gone { opacity: 0; pointer-events: none; }
+#splash img { width: min(72vw, 360px); aspect-ratio: 1; border-radius: 50%; animation: rise 1s ease-out; box-shadow: 0 0 70px rgba(71, 211, 255, .45); }
+
+body.phone { display: flex; align-items: center; justify-content: center; background: radial-gradient(60% 50% at 50% 40%, #0b1a33, #02040a); }
+body.phone #app { flex: none; width: min(100%, 390px); height: min(100%, 844px); border-radius: 38px; border: 2px solid rgba(130, 190, 255, .35); box-shadow: 0 0 70px rgba(71, 211, 255, .18); }
+#map { width: 100%; aspect-ratio: 1; max-height: 440px; border-radius: 16px; border: 1px solid var(--line); overflow: hidden; background: #0a1330; box-shadow: 0 0 36px rgba(71, 211, 255, .15); }
+#map[hidden] { display: none; }
+#map .leaflet-tile-pane { filter: invert(1) hue-rotate(190deg) saturate(.65) brightness(.88) contrast(.92); }
+#map.leaflet-container { font: inherit; background: #0a1330; }
+#map .leaflet-control-attribution { background: rgba(4, 8, 22, .75); color: var(--mute); }
+#map .leaflet-control-attribution a { color: var(--ice); }
+#map .leaflet-bar a { background: rgba(6, 12, 30, .9); color: var(--ice); border-color: var(--line); }
+#map.picking { cursor: crosshair; outline: 2px dashed var(--cyan); outline-offset: -2px; }
+.gq-pin i { display: block; width: 20px; height: 20px; margin: 3px; transform: rotate(45deg); background: var(--violet); border: 2px solid #fff; box-shadow: 0 0 16px var(--violet), 0 0 4px #fff; }
+.gq-pin.done i { background: var(--ok); box-shadow: 0 0 16px var(--ok); }
+details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--cyan); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
+  #stage.zoom { transform: none; filter: none; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-ghost" viewBox="0 0 24 24"><path d="M6 20V10a6 6 0 0 1 12 0v10l-2.4-2-2.1 2-1.5-2-1.5 2-2.1-2z"/><circle cx="10" cy="10.5" r=".7" fill="currentColor"/><circle cx="14" cy="10.5" r=".7" fill="currentColor"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+  <symbol id="i-gate" viewBox="0 0 24 24"><path d="M5 21V10a7 7 0 0 1 14 0v11M9 21v-8a3 3 0 0 1 6 0v8"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM8 4v13"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4"/><path d="M12 3v2.4M12 18.6V21M3 12h2.4M18.6 12H21M5.6 5.6l1.7 1.7M16.7 16.7l1.7 1.7M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-diamond" viewBox="0 0 24 24"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 3 1.1-6.2L3 9.7l6.2-.9z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></symbol>
+</svg>
+
+<div id="app">
+  <div id="backdrop" aria-hidden="true"></div>
+
+  <div id="stage">
+    <div id="world">
+      <img id="worldimg" alt="A moonlit ruin. A hooded ghost drifts above a glowing gateway on the right and a carved stone with a compass mark stands on the left.">
+      <div class="fx breath"></div>
+      <div class="fx mist a"></div>
+      <div class="fx mist b"></div>
+      <button class="hot" data-go="explore" aria-label="Enter the exploration world through the carved stone"><span class="glow"></span><span class="ring"></span><span class="tag">Explore</span></button>
+      <button class="hot" data-go="ghost" aria-label="Enter the ghost hunting world through the glowing gateway"><span class="glow"></span><span class="ring"></span><span class="tag">Ghost portal</span></button>
+    </div>
+  </div>
+  <div class="flash" id="flash"></div>
+
+  <div id="home-ui">
+    <div class="hud">
+      <img class="avatar" id="avatar" alt="GhostQuest emblem">
+      <div class="lvl">
+        <div class="row"><span id="hud-lvl">LV 1</span><span id="hud-xp">0 XP</span></div>
+        <div class="bar" role="progressbar" aria-label="Level progress" aria-valuemin="0" aria-valuemax="100" id="hud-bar"><i></i></div>
+      </div>
+      <span class="spacer"></span>
+      <span class="pill" id="net"><i></i><span>Online</span></span>
+      <button class="iconbtn" data-open="settings" aria-label="Settings and privacy"><svg class="i"><use href="#i-gear"/></svg></button>
+    </div>
+    <img id="wordmark" alt="GhostQuest!">
+    <p class="hint">Tap the stone to explore. Tap the gateway to hunt ghosts.</p>
+    <div class="dock">
+      <button data-go="explore"><svg class="i"><use href="#i-compass"/></svg>Explore</button>
+      <button data-open="collection"><svg class="i"><use href="#i-book"/></svg>Collection</button>
+      <button data-go="ghost"><svg class="i"><use href="#i-gate"/></svg>Ghost portal</button>
+    </div>
+  </div>
+
+  <!-- EXPLORE -->
+  <section class="panel" id="p-explore" data-tint="explore" aria-label="Exploration">
+    <div class="phead">
+      <button class="back" data-home aria-label="Back to the main world"><svg class="i"><use href="#i-back"/></svg>Home</button>
+      <div class="grow"><h2>The Stone Path</h2><p class="cap sub">Exploration</p></div>
+      <span class="status" id="qstatus" data-s="idle">Idle</span>
+    </div>
+    <div class="pscroll"><div class="col">
+      <div class="card">
+ <div id="map" hidden role="application" aria-label="Map showing your start point, the maximum distance circle and the generated coordinate"></div>
+        <div class="radarwrap" id="radarwrap"><canvas id="radar" width="380" height="380" role="img" aria-label="Radar view of the exploration radius with your start point in the centre and the generated destination as a marker"></canvas></div>
+        <p class="cap" id="radar-cap" style="text-align:center;margin-top:10px">Radar view, north up. Not a street map.</p>
+        <p class="cap" id="map-cap" hidden style="text-align:center;margin-top:10px">Map data &copy; OpenStreetMap contributors. The dashed circle is your maximum distance. The diamond is a random coordinate, not a checked place.</p>
+        <div class="btns" id="pick-row" hidden style="justify-content:center;margin-top:10px"><button class="btn" id="btn-pick" aria-pressed="false"><svg class="i"><use href="#i-pin"/></svg>Tap the map to set start</button></div>
+      </div>
+
+      <div class="card">
+        <h3>Start point</h3>
+        <p class="small" id="origin-text"></p>
+        <div class="btns">
+          <button class="btn" id="btn-loc"><svg class="i"><use href="#i-pin"/></svg>Use my location</button>
+        </div>
+        <p class="small muted" style="margin-top:10px">Your position is only used on this device to place you on the radar. It is never uploaded.</p>
+        <p class="small" id="loc-msg" role="status"></p>
+        <details class="dd">
+          <summary>Or type or paste a start point</summary>
+          <p class="small muted">Copy a coordinate from MAPS.ME or any map app (for example 52.3791, 4.9003) and paste it here. It stays in memory only.</p>
+          <label class="cap lab" for="start-in">Latitude, longitude</label>
+          <input type="text" id="start-in" inputmode="decimal" autocomplete="off" placeholder="52.3791, 4.9003">
+          <div class="btns" style="margin-top:10px"><button class="btn" id="btn-start-coord">Use these coordinates</button></div>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>Exploration radius</h3>
+        <div class="kv"><span>Radius</span><span id="rad-out"></span></div>
+        <input type="range" id="rad" min="100" max="5000" step="50" aria-label="Exploration radius in metres">
+        <div class="chips" id="rad-chips" style="margin-top:6px">
+          <button class="chip" data-r="250" aria-pressed="false">250 m</button>
+          <button class="chip" data-r="500" aria-pressed="false">500 m</button>
+          <button class="chip" data-r="1000" aria-pressed="false">1 km</button>
+          <button class="chip" data-r="2000" aria-pressed="false">2 km</button>
+          <button class="chip" data-r="5000" aria-pressed="false">5 km</button>
+        </div>
+        <label class="cap lab" for="rad-num" style="margin-top:12px">Exact maximum distance (metres, 50 to 5000)</label>
+        <input type="number" id="rad-num" min="50" max="5000" step="10" inputmode="numeric">
+        <div class="btns" style="margin-top:14px"><button class="btn primary" id="btn-gen"><svg class="i"><use href="#i-diamond"/></svg>Generate destination</button></div>
+      </div>
+
+      <div class="card" id="dest-card" hidden>
+        <h3>Generated coordinate</h3>
+        <div class="kv"><span>Coordinate</span><span id="d-coord"></span></div>
+        <div class="kv"><span>Distance</span><span id="d-dist"></span></div>
+        <div class="kv"><span>Direction</span><span id="d-dir"></span></div>
+        <div class="kv"><span>Verified safe</span><span class="sim">No. Unchecked.</span></div>
+        <div class="note" style="margin:12px 0"><svg class="i"><use href="#i-warn"/></svg><div>This is a random point, not a recommended place. Look at it on a map before you go. Skip it if it is private land, a road, a railway, water, a construction site or an unsafe building. Pick a safe public spot near it instead.</div></div>
+        <div class="btns">
+          <a class="btn" id="a-osm" target="_blank" rel="noopener">Inspect on map</a>
+          <a class="btn" id="a-apple" target="_blank" rel="noopener">Walk there in Apple Maps</a>
+          <a class="btn" id="a-om" href="#" rel="noopener">Open in Organic Maps</a>
+          <a class="btn" id="a-mapsme" href="#" rel="noopener">Try MAPS.ME</a>
+          <button class="btn" id="btn-copy">Copy coordinates</button>
+        </div>
+        <p class="small muted" style="margin-top:8px">Organic Maps and MAPS.ME are separate apps with their own offline maps. The buttons hand them the coordinate, so open them only if the app is installed. If a link does not open, copy the coordinates and paste them into the app's search bar.</p>
+        <div class="btns" style="margin-top:10px">
+          <button class="btn primary" id="btn-checkin">Check in</button>
+          <button class="btn danger" id="btn-cancel">Cancel quest</button>
+        </div>
+        <p class="small" id="checkin-msg" role="status" style="margin-top:10px"></p>
+      </div>
+
+      <div class="card">
+        <h3>Latest finds</h3>
+        <div id="ex-finds" class="small"></div>
+        <div class="btns" style="margin-top:10px"><button class="btn" data-open="collection"><svg class="i"><use href="#i-book"/></svg>Open collection</button></div>
+      </div>
+
+      <div class="card">
+        <h3>Safety</h3>
+        <p class="small muted">You can cancel any quest and head home at any time. Stay on public ground, follow local laws, keep off roads and tracks, and do not enter unsafe or abandoned buildings. Do not share a precise live location in a public stream.</p>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- GHOST -->
+  <section class="panel" id="p-ghost" data-tint="ghost" aria-label="Ghost hunting">
+    <div class="phead">
+      <button class="back" data-home aria-label="Return through the portal to the main world"><svg class="i"><use href="#i-back"/></svg>Home</button>
+      <div class="grow"><h2>Beyond the Gate</h2><p class="cap sub">Ghost hunting</p></div>
+      <span class="status" id="gstatus" data-s="idle">Standby</span>
+    </div>
+    <div class="pscroll"><div class="col">
+      <div class="note"><svg class="i"><use href="#i-warn"/></svg><div><strong>Entertainment simulation.</strong> A phone cannot detect spirits. The meter and the spirit box below produce made-up readings for atmosphere and play.</div></div>
+
+      <div class="card">
+        <h3>Investigation</h3>
+        <div class="kv"><span>Session time</span><span id="g-time">00:00</span></div>
+        <div class="kv"><span>Discoveries this session</span><span id="g-count">0</span></div>
+        <div class="btns" style="margin-top:12px">
+          <button class="btn violet" id="btn-start">Start investigation</button>
+          <button class="btn" id="btn-rec" disabled>Record discovery</button>
+          <button class="btn" id="btn-end" disabled>End investigation</button>
+        </div>
+        <p class="small" id="g-msg" role="status" style="margin-top:10px"></p>
+      </div>
+
+      <div class="two">
+        <div class="card">
+          <h3>EMF meter <span class="sim mono small">SIMULATED</span></h3>
+          <div class="readout" id="emf-val">0.0 mG</div>
+          <div class="emf" id="emf" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <p class="small muted">Random readings, not a measurement.</p>
+        </div>
+        <div class="card">
+          <h3>Spirit box <span class="sim mono small">SIMULATED</span></h3>
+          <div class="readout sb" id="sb-freq">FM --.-</div>
+          <div class="flog" id="sb-log" aria-live="off"></div>
+          <p class="small muted">Words are picked from a fixed list.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Investigation notes</h3>
+        <label class="cap lab" for="note-in">Note (saved on this device)</label>
+        <textarea id="note-in" maxlength="400" placeholder="What did you notice?"></textarea>
+        <div class="btns" style="margin-top:10px"><button class="btn" id="btn-note">Save note</button></div>
+        <div id="notes" style="margin-top:8px"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- COLLECTION -->
+  <section class="panel" id="p-collection" aria-label="Collection">
+    <div class="phead">
+      <button class="back" data-home aria-label="Back to the main world"><svg class="i"><use href="#i-back"/></svg>Home</button>
+      <div class="grow"><h2>The Collection</h2><p class="cap sub" id="col-sub">Ghosts, artefacts and badges</p></div>
+    </div>
+    <div class="pscroll"><div class="col">
+      <div class="card">
+        <h3>Today's quests</h3>
+        <div id="quests"></div>
+      </div>
+      <div class="chips" id="col-filter" role="group" aria-label="Filter collection">
+        <button class="chip" data-f="all" aria-pressed="true">All</button>
+        <button class="chip" data-f="ghost" aria-pressed="false">Ghosts</button>
+        <button class="chip" data-f="artefact" aria-pressed="false">Artefacts</button>
+        <button class="chip" data-f="badge" aria-pressed="false">Badges</button>
+      </div>
+      <div class="grid" id="col-grid"></div>
+      <div class="card">
+        <h3>Discovery history</h3>
+        <div id="history" class="small"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="panel" id="p-settings" aria-label="Settings and privacy">
+    <div class="phead">
+      <button class="back" data-home aria-label="Back to the main world"><svg class="i"><use href="#i-back"/></svg>Home</button>
+      <div class="grow"><h2>Settings &amp; Privacy</h2><p class="cap sub">GhostQuest preview build</p></div>
+    </div>
+    <div class="pscroll"><div class="col">
+      <div class="card">
+        <h3>Your progress</h3>
+        <div class="kv"><span>Level</span><span id="s-lvl"></span></div>
+        <div class="kv"><span>Experience</span><span id="s-xp"></span></div>
+        <div class="kv"><span>Collected</span><span id="s-col"></span></div>
+        <div class="kv"><span>Discoveries</span><span id="s-dis"></span></div>
+        <p class="small muted" id="s-store" style="margin-top:8px"></p>
+      </div>
+
+      <div class="card">
+        <h3>Privacy and permissions</h3>
+        <p class="small">No account is needed. Progress, notes and history are stored only in this browser on this device.</p>
+        <p class="small"><strong>Location.</strong> Asked for only when you tap "Use my location". It places you on the radar and checks arrival. It is never uploaded. Discoveries keep only a rounded position, accurate to about 100 m.</p>
+        <p class="small"><strong>Microphone and camera.</strong> Not used.</p>
+        <p class="small"><strong>Creators.</strong> If you stream, do not show your live position on screen. Overlays will never show coordinates unless you switch that on yourself.</p>
+        <p class="small"><strong>Check-ins.</strong> A check-in earns the full reward only with a real location fix close to the destination. Without one, you can do a labelled demo check-in for a reduced reward.</p>
+      </div>
+
+      <div class="card">
+        <h3>What is simulated in this build</h3>
+        <ul class="small" style="margin:0;padding-left:1.1em">
+          <li>The radar is a plain radar view, not a street map. Street maps and routes need a map service this preview cannot reach.</li>
+          <li>Generated destinations are random coordinates. Nothing checks roads, water or access.</li>
+          <li>The EMF meter and spirit box are random entertainment effects.</li>
+          <li>Offline: once loaded, the game keeps working without a connection. Installing it as an app is planned for the standalone version.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Display</h3>
+        <p class="small muted">Phone preview shows the game in a phone-sized frame, so you can see the portrait layout on a larger screen.</p>
+        <div class="chips"><button class="chip" id="btn-phone" aria-pressed="false">Phone preview</button></div>
+      </div>
+
+      <div class="card">
+        <h3>Install on your iPad or phone</h3>
+        <p class="small muted">When GhostQuest is opened from its own web address, tap Share, then Add to Home Screen. It then opens full screen like an app and keeps working without a connection. A file opened straight from Files does not do this.</p>
+      </div>
+
+      <div class="card">
+        <h3>Your artwork</h3>
+        <p class="small muted">Swap in a new image from this device. It is stored in this browser only. Use a world image with the same layout (stone left, gateway right) so the entrances line up.</p>
+        <label class="cap lab" for="art-world">World background</label>
+        <input type="file" id="art-world" accept="image/*">
+        <label class="cap lab" for="art-word" style="margin-top:10px">Name (light letters on black)</label>
+        <input type="file" id="art-word" accept="image/*">
+        <label class="cap lab" for="art-logo" style="margin-top:10px">Emblem</label>
+        <input type="file" id="art-logo" accept="image/*">
+        <div class="btns" style="margin-top:12px"><button class="btn" id="art-reset">Restore original artwork</button></div>
+        <p class="small" id="art-msg" role="status"></p>
+      </div>
+
+      <div class="card">
+        <h3>Coming later</h3>
+        <ul class="small" style="margin:0;padding-left:1.1em">
+          <li>Creator tools: stream overlay, session markers, shareable discovery cards.</li>
+          <li>Street maps and walking routes where a map service is available.</li>
+          <li>Optional cosmetic packs. The game stays fully playable for free. Digital purchases may need to use Apple App Store and Google Play billing.</li>
+          <li>Real sensor and audio tools, clearly labelled as entertainment.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Reset</h3>
+        <p class="small muted">Deletes XP, collection, history and notes from this device.</p>
+        <div class="btns" id="reset-row"><button class="btn danger" id="btn-reset">Reset progress</button></div>
+      </div>
+    </div></div>
+  </section>
+
+  <div id="modal" role="dialog" aria-modal="true" aria-label="Discovery"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="splash" aria-hidden="true"><img id="splash-logo" alt=""></div>
+</div>
+
+<script>
+/*__LOGIC__*/
+</script>
+<script>
+(function () {
+  'use strict';
+  var G = window.GQ;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var ART = { world: 'assets/world.jpg', wordmark: 'assets/wordmark.png', logo: 'assets/logo.jpg', icon: 'assets/icon.jpg' };
+  var HOT = { explore: { x: .03, y: .515, w: .28, h: .30 }, ghost: { x: .595, y: .485, w: .21, h: .33 } };
+  var worldAspect = 1100 / 1652;
+
+  /* ---------- storage (localStorage, with memory fallback) ---------- */
+  var KEY = 'ghostquest.v1', mem = null, storeOk = true;
+  function load() {
+    try { var raw = localStorage.getItem(KEY) || localStorage.getItem('gostquest.v1'); return G.normalizeState(raw ? JSON.parse(raw) : null); }
+    catch (e) { storeOk = false; return G.normalizeState(mem); }
+  }
+  function save() {
+    mem = S;
+    try { localStorage.setItem(KEY, JSON.stringify(S)); storeOk = true; } catch (e) { storeOk = false; }
+  }
+  var S = load();
+
+  /* artwork overrides in IndexedDB */
+  var DB = 'ghostquest-art';
+  function idb(mode, fn) {
+    return new Promise(function (res, rej) {
+      try {
+        var rq = indexedDB.open(DB, 1);
+        rq.onupgradeneeded = function () { rq.result.createObjectStore('art'); };
+        rq.onerror = function () { rej(rq.error); };
+        rq.onsuccess = function () {
+          var tx = rq.result.transaction('art', mode), st = tx.objectStore('art'), out = fn(st);
+          tx.oncomplete = function () { res(out && 'result' in out ? out.result : undefined); };
+          tx.onerror = function () { rej(tx.error); };
+        };
+      } catch (e) { rej(e); }
+    });
+  }
+  function artGet(k) { return idb('readonly', function (st) { return st.get(k); }); }
+  function artSet(k, v) { return idb('readwrite', function (st) { return st.put(v, k); }); }
+  function artClear() { return idb('readwrite', function (st) { return st.clear(); }); }
+
+  /* ---------- helpers ---------- */
+  var toastT;
+  function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 2600); }
+  function rar(r) { return 'r-' + r; }
+  function icon(kind) { return '<svg class="i"><use href="#i-' + (kind === 'ghost' ? 'ghost' : kind === 'artefact' ? 'diamond' : 'star') + '"/></svg>'; }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  /* ---------- world layout ---------- */
+  function layout() {
+    var st = $('#stage'), vw = st.clientWidth, vh = st.clientHeight, w = $('#world');
+    if (!vw || !vh) return;
+    var A = worldAspect, W, H, X, Y, cl = function (v, lo, hi) { return Math.min(hi, Math.max(lo, v)); };
+    if (vw / vh > 0.85) { H = vh; W = H * A; X = (vw - W) / 2; Y = 0; }
+    else {
+      if (vw / vh > A) { W = vw; H = W / A; } else { H = vh; W = H * A; }
+      X = cl(vw / 2 - 0.4175 * W, vw - W, 0); Y = cl(vh / 2 - 0.58 * H, vh - H, 0);
+    }
+    w.style.cssText = 'left:' + X + 'px;top:' + Y + 'px;width:' + W + 'px;height:' + H + 'px';
+    /* keep the ghost's eyes (about 20% down the artwork) clear of the name */
+    var wm = $('#wordmark'), hud = $('.hud'), topEdge = 12 + hud.offsetHeight + 14;
+    var ratio = wm.naturalWidth ? wm.naturalWidth / wm.naturalHeight : 900 / 152;
+    var maxH = Math.max(44, Y + 0.165 * H - topEdge - 6);
+    wm.style.width = Math.min(vw * 0.88, 520, maxH * ratio) + 'px';
+    $$('.hot').forEach(function (b) {
+      var h = HOT[b.dataset.go];
+      b.style.cssText = 'left:' + h.x * 100 + '%;top:' + h.y * 100 + '%;width:' + h.w * 100 + '%;height:' + h.h * 100 + '%';
+    });
+  }
+  window.addEventListener('resize', function () { layout(); drawRadar(); });
+
+  /* ---------- artwork ---------- */
+  function setWorld(src) {
+    var img = $('#worldimg');
+    img.onload = function () { if (img.naturalWidth) { worldAspect = img.naturalWidth / img.naturalHeight; layout(); } };
+    img.src = src;
+    document.documentElement.style.setProperty('--world-url', 'url("' + src + '")');
+  }
+  function applyArt(o) {
+    setWorld(o.world || ART.world);
+    $('#wordmark').src = o.wordmark || ART.wordmark;
+    var lg = o.logo || ART.logo;
+    $('#avatar').src = o.logo || ART.icon;
+    $('#splash-logo').src = lg;
+  }
+  function loadArt() {
+    var o = {};
+    Promise.all(['world', 'wordmark', 'logo'].map(function (k) { return artGet(k).then(function (v) { if (v) o[k] = v; }); }))
+      .then(function () { applyArt(o); }, function () { applyArt(o); });
+  }
+  function fileToData(file, maxDim, cropBars) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader();
+      fr.onerror = function () { rej(fr.error); };
+      fr.onload = function () {
+        var im = new Image();
+        im.onerror = function () { rej(new Error('Not an image')); };
+        im.onload = function () {
+          var sx = 0, sw = im.naturalWidth, sh = im.naturalHeight;
+          if (cropBars) { /* trim black bars at the left and right edges */
+            var p = document.createElement('canvas'); p.width = im.naturalWidth; p.height = 40;
+            var pc = p.getContext('2d'); pc.drawImage(im, 0, 0, p.width, 40);
+            var d = pc.getImageData(0, 0, p.width, 40).data, lum = function (x) { var s = 0; for (var y = 0; y < 40; y++) { var i = (y * p.width + x) * 4; s += Math.max(d[i], d[i + 1], d[i + 2]); } return s / 40; };
+            var l = 0, r = p.width - 1;
+            while (l < r && lum(l) < 10) l++; while (r > l && lum(r) < 10) r--;
+            if (r - l > p.width * 0.4) { sx = l; sw = r - l + 1; }
+          }
+          var sc = Math.min(1, maxDim / Math.max(sw, sh)), c = document.createElement('canvas');
+          c.width = Math.round(sw * sc); c.height = Math.round(sh * sc);
+          c.getContext('2d').drawImage(im, sx, 0, sw, sh, 0, 0, c.width, c.height);
+          res(c.toDataURL(cropBars || file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.85));
+        };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+  function bindArt(inputId, key, maxDim, crop) {
+    $(inputId).addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0]; if (!f) return;
+      fileToData(f, maxDim, crop).then(function (data) { return artSet(key, data).then(function () { return data; }); })
+        .then(function () { $('#art-msg').textContent = 'Saved on this device.'; loadArt(); })
+        .catch(function () { $('#art-msg').textContent = 'That image could not be used or saved. Try a smaller picture.'; });
+    });
+  }
+  bindArt('#art-world', 'world', 1400, true); bindArt('#art-word', 'wordmark', 1000, false); bindArt('#art-logo', 'logo', 700, false);
+  $('#art-reset').addEventListener('click', function () {
+    artClear().then(function () { $('#art-msg').textContent = 'Original artwork restored.'; loadArt(); }, function () { $('#art-msg').textContent = 'Nothing to restore.'; });
+  });
+
+  /* ---------- HUD ---------- */
+  function refreshHud() {
+    var L = G.levelFromXp(S.xp);
+    $('#hud-lvl').textContent = 'LV ' + L.level;
+    $('#hud-xp').textContent = L.into + ' / ' + L.needed + ' XP';
+    $('#hud-bar i').style.width = Math.round(L.pct * 100) + '%';
+    $('#hud-bar').setAttribute('aria-valuenow', Math.round(L.pct * 100));
+  }
+  function netUpdate() {
+    var on = navigator.onLine !== false, n = $('#net');
+    n.classList.toggle('off', !on); $('span', n).textContent = on ? 'Online' : 'Offline';
+  }
+  window.addEventListener('online', function () { netUpdate(); toast('Back online.'); });
+  window.addEventListener('offline', function () { netUpdate(); toast('Offline. Your progress is saved on this device.'); });
+
+  /* ---------- navigation ---------- */
+  var current = 'home', busy = false;
+  function showPanel(name) {
+    $$('.panel').forEach(function (p) { p.classList.remove('open'); });
+    var p = $('#p-' + name);
+    p.classList.add('show');
+    requestAnimationFrame(function () { requestAnimationFrame(function () { p.classList.add('open'); }); });
+    $$('.panel').forEach(function (q) { if (q !== p) setTimeout(function () { if (!q.classList.contains('open')) q.classList.remove('show'); }, 420); });
+    current = name; p.querySelector('.pscroll').scrollTop = 0;
+    if (name === 'explore') { renderExplore(); startRadar(); setTimeout(function () { if (map && current === 'explore') drawMap(true); }, 450); } else stopRadar();
+    if (name === 'ghost') renderGhost();
+    if (name === 'collection') renderCollection();
+    if (name === 'settings') renderSettings();
+    if (name !== 'ghost') ghostPause();
+  }
+  function goHome() {
+    if (current === 'home') return;
+    var was = current;
+    $$('.panel').forEach(function (p) { p.classList.remove('open'); setTimeout(function () { if (!p.classList.contains('open')) p.classList.remove('show'); }, 420); });
+    current = 'home'; stopRadar(); ghostPause();
+    var hb = $('.hot[data-go="' + (was === 'ghost' ? 'ghost' : 'explore') + '"]'); if (hb && !reduced) { hb.classList.add('press'); setTimeout(function () { hb.classList.remove('press'); }, 900); }
+  }
+  function enter(kind, btn) {
+    if (busy || current !== 'home') return;
+    var hot = btn.classList.contains('hot') ? btn : $('.hot[data-go="' + kind + '"]');
+    hot.classList.add('press'); setTimeout(function () { hot.classList.remove('press'); }, 900);
+    if (reduced) { showPanel(kind); return; }
+    busy = true;
+    var ar = $('#app').getBoundingClientRect(), r = hot.getBoundingClientRect();
+    var cx = r.left + r.width / 2 - ar.left, cy = r.top + r.height * 0.55 - ar.top;
+    var fl = $('#flash'), st = $('#stage');
+    fl.style.left = cx + 'px'; fl.style.top = cy + 'px';
+    fl.style.setProperty('--fc', kind === 'ghost' ? '#9677ff' : '#47d3ff');
+    st.style.transformOrigin = cx + 'px ' + cy + 'px';
+    fl.classList.add('on'); st.classList.add('zoom');
+    setTimeout(function () {
+      showPanel(kind);
+      setTimeout(function () { fl.classList.remove('on'); st.classList.remove('zoom'); busy = false; }, 420);
+    }, 680);
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-go],[data-open],[data-home]'); if (!t) return;
+    if (t.hasAttribute('data-go')) enter(t.dataset.go, t);
+    else if (t.hasAttribute('data-open')) { if (current === 'home') showPanel(t.dataset.open); else showPanel(t.dataset.open); }
+    else if (t.hasAttribute('data-home')) goHome();
+  });
+  document.addEventListener('pointerdown', function (e) { var h = e.target.closest('.hot'); if (h) h.classList.add('press'); });
+  document.addEventListener('pointerup', function () { setTimeout(function () { $$('.hot.press').forEach(function (h) { if (!busy) h.classList.remove('press'); }); }, 250); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if ($('#modal').classList.contains('show')) closeModal(); else goHome(); } });
+
+  /* ---------- EXPLORE ---------- */
+  var geo = null; /* last real position: {lat,lng,accuracyM} */
+  var STATUS = { idle: 'Idle', ready: 'Destination ready', navigating: 'On the way', arrived: 'Arrived', cancelled: 'Cancelled' };
+  var sessionOrigin = null; /* precise device location, memory only */
+  function originKind() { return (sessionOrigin && S.quest.source !== 'demo') ? S.quest.source : 'demo'; }
+  function origin() { return originKind() === 'demo' ? G.DEMO_ORIGIN : sessionOrigin; }
+  function renderExplore() {
+    var q = S.quest, st = $('#qstatus'); st.textContent = STATUS[q.status]; st.dataset.s = q.status;
+    var ok = originKind();
+    $('#origin-text').textContent = ok === 'gps'
+      ? 'Using your device location (accuracy about ' + Math.round(geo && geo.accuracyM || 0) + ' m).'
+      : ok === 'manual' ? 'Using the coordinates you entered: ' + G.formatCoord(sessionOrigin) + '.'
+      : 'Using a demo start point (Amsterdam city centre, an example). Use your location, or type a start point below.';
+    $('#rad').value = S.settings.radiusM; $('#rad-num').value = S.settings.radiusM; $('#rad-out').textContent = G.formatDistance(S.settings.radiusM) + ' (about ' + G.walkMinutes(S.settings.radiusM) + ' min walk)';
+    $$('#rad-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(+c.dataset.r === S.settings.radiusM)); });
+    var d = q.dest, card = $('#dest-card');
+    card.hidden = !d || q.status === 'idle';
+    if (d && q.status !== 'idle') {
+      $('#d-coord').textContent = G.formatCoord(d);
+      $('#d-dist').textContent = G.formatDistance(d.distanceM) + ' (about ' + G.walkMinutes(d.distanceM) + ' min walk)';
+      $('#d-dir').textContent = G.compassLabel(d.bearingDeg) + ' ' + Math.round(d.bearingDeg) + '°';
+      $('#a-osm').href = G.osmUrl(d); $('#a-apple').href = G.appleMapsUrl(d); $('#a-mapsme').href = G.mapsmeUrl(d); $('#a-om').href = G.omapsUrl(d);
+      var live = q.status === 'ready' || q.status === 'navigating';
+      $('#btn-checkin').disabled = !live; $('#btn-cancel').disabled = !live;
+      $('#btn-checkin').textContent = q.source === 'gps' ? 'Check in here' : 'Check in (demo)';
+    }
+    var f = S.discoveries.filter(function (x) { return x.mode === 'explore'; }).slice(0, 3);
+    $('#ex-finds').innerHTML = f.length ? f.map(function (x) { return '<div class="hrow"><strong>' + esc(x.title) + '</strong><span class="tagm ' + rar(x.rarity) + '" style="color:var(--rc)">' + x.rarity + '</span>' + (x.demo ? '<span class="tagm demo">Demo</span>' : '') + '</div>'; }).join('') : '<span class="muted">Nothing found yet. Generate a destination to begin.</span>';
+    ensureMap(); if (map) drawMap(true); else drawRadar();
+  }
+  $('#rad').addEventListener('input', function (e) {
+    S.settings.radiusM = G.clampRadius(e.target.value); save(); $('#rad-num').value = S.settings.radiusM;
+    $('#rad-out').textContent = G.formatDistance(S.settings.radiusM) + ' (about ' + G.walkMinutes(S.settings.radiusM) + ' min walk)';
+    $$('#rad-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(+c.dataset.r === S.settings.radiusM)); });
+    if (map) drawMap(false); else drawRadar();
+  });
+  $('#rad').addEventListener('change', function () { if (map) drawMap(true); });
+  $('#rad-num').addEventListener('change', function (e) { S.settings.radiusM = G.clampRadius(e.target.value); save(); renderExplore(); });
+  $('#rad-chips').addEventListener('click', function (e) {
+    var c = e.target.closest('.chip'); if (!c) return;
+    S.settings.radiusM = +c.dataset.r; save(); renderExplore();
+  });
+  $('#btn-gen').addEventListener('click', function () {
+    var rM = S.settings.radiusM, d = G.randomDestination(origin(), rM);
+    S.quest = { status: 'ready', dest: d, origin: null, source: originKind(), radiusM: rM };
+    var r = G.recordGenerate(S, Date.now()); S = r.state; save(); refreshHud();
+    $('#checkin-msg').textContent = '';
+    renderExplore();
+    if (r.xpGained) toast('Daily quest done: +' + r.xpGained + ' XP');
+    setTimeout(function () { var c = $('#dest-card'); if (c && !c.hidden) c.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }, 60);
+  });
+  $('#btn-loc').addEventListener('click', function () {
+    var m = $('#loc-msg');
+    if (!navigator.geolocation) { m.textContent = 'Location is not available here. Staying on the demo start point.'; return; }
+    m.textContent = 'Asking your device for a location fix...';
+    navigator.geolocation.getCurrentPosition(function (p) {
+      geo = { lat: p.coords.latitude, lng: p.coords.longitude, accuracyM: p.coords.accuracy };
+      S.quest.origin = { lat: geo.lat, lng: geo.lng }; S.quest.source = 'gps'; S.quest.status = 'idle'; S.quest.dest = null;
+      /* the precise position is kept in memory only and never written to storage */
+      sessionOrigin = { lat: geo.lat, lng: geo.lng };
+      S.quest.origin = null; S.quest.source = 'gps'; save();
+      m.textContent = 'Location found. Generate a destination around you.'; renderExplore();
+    }, function (err) {
+      m.textContent = (err && err.code === 1 ? 'Location permission was not granted.' : 'No location fix is available here.') + ' You can keep exploring with the demo start point. Demo check-ins give a reduced reward.';
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+  });
+  $('#btn-start-coord').addEventListener('click', function () {
+    var c = G.parseCoords($('#start-in').value), m = $('#loc-msg');
+    if (!c) { m.textContent = 'That does not look like a coordinate. Try latitude, longitude, for example 52.3791, 4.9003.'; return; }
+    sessionOrigin = c; S.quest = { status: 'idle', dest: null, origin: null, source: 'manual', radiusM: S.settings.radiusM }; save();
+    m.textContent = 'Start point set. Generate a destination around it.'; renderExplore();
+  });
+  $('#btn-copy').addEventListener('click', function () { if (S.quest.dest) copyText(G.formatCoord(S.quest.dest)); });
+  $('#btn-cancel').addEventListener('click', function () {
+    S.quest.status = 'cancelled'; save(); renderExplore();
+    $('#checkin-msg').textContent = 'Quest cancelled. Nothing is lost. Head somewhere safe and generate a new destination whenever you like.';
+  });
+  ['#a-osm', '#a-apple'].forEach(function (id) {
+    $(id).addEventListener('click', function () { if (S.quest.status === 'ready') { S.quest.status = 'navigating'; save(); renderExplore(); } });
+  });
+
+  $('#btn-checkin').addEventListener('click', function () {
+    var q = S.quest, m = $('#checkin-msg'); if (!q.dest) return;
+    function demoCheckin(reason) {
+      m.innerHTML = esc(reason) + ' <button class="btn" id="btn-demo-ci" style="margin-top:8px">Demo check-in (reduced reward)</button>';
+      $('#btn-demo-ci').addEventListener('click', function () { complete(true); });
+    }
+    function complete(demo) {
+      var ctx = { radiusM: q.radiusM, demo: demo };
+      var roll = G.rollCollectible('explore', ctx, Math.random, S.collection);
+      var res = G.recordFind(S, { mode: 'explore', item: roll.item, isNew: roll.isNew, demo: demo, coords: G.roundCoarse(q.dest) }, Date.now());
+      S = res.state; S.quest.status = 'arrived'; save(); refreshHud(); m.textContent = ''; renderExplore(); reveal(res, roll, demo ? 'Demo check-in. Not verified.' : 'Location verified.');
+    }
+    if (q.source === 'gps' && navigator.geolocation) {
+      m.textContent = 'Checking your position...';
+      navigator.geolocation.getCurrentPosition(function (p) {
+        var pos = { lat: p.coords.latitude, lng: p.coords.longitude, accuracyM: p.coords.accuracy };
+        var r = G.checkArrival(pos, q.dest);
+        if (r.ok) complete(false);
+        else if (r.reason === 'low-accuracy') demoCheckin('Your location is too imprecise right now (about ' + Math.round(pos.accuracyM) + ' m). Move to open sky and try again, or use a demo check-in.');
+        else demoCheckin('You are about ' + G.formatDistance(r.distanceM) + ' from the destination. Get within ' + G.formatDistance(r.allowedM) + ' to verify, or use a demo check-in.');
+      }, function () { demoCheckin('No location fix is available.'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 });
+    } else {
+      demoCheckin(q.source === 'gps' ? 'Location is not available.' : 'This quest did not start from your device location, so your real position cannot be checked.');
+    }
+  });
+
+  /* real map (only when the Leaflet library is present, i.e. in the hosted app) */
+  var map = null, mapLayer = null, picking = false;
+  function ensureMap() {
+    if (map || !window.L) return;
+    try {
+      var el = $('#map');
+      el.hidden = false;
+      map = L.map(el, { zoomControl: true, worldCopyJump: true }).setView([G.DEMO_ORIGIN.lat, G.DEMO_ORIGIN.lng], 14);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(map);
+      mapLayer = L.layerGroup().addTo(map);
+      map.on('click', function (e) {
+        if (!picking) return;
+        setPicking(false);
+        sessionOrigin = { lat: e.latlng.lat, lng: e.latlng.lng };
+        S.quest = { status: 'idle', dest: null, origin: null, source: 'manual', radiusM: S.settings.radiusM }; save();
+        $('#loc-msg').textContent = 'Start point set on the map. Generate a destination around it.'; renderExplore();
+      });
+      $('#radarwrap').hidden = true; $('#radar-cap').hidden = true; $('#map-cap').hidden = false; $('#pick-row').hidden = false;
+    } catch (err) { map = null; $('#map').hidden = true; }
+  }
+  function setPicking(on) { picking = on; var b = $('#btn-pick'); b.setAttribute('aria-pressed', String(on)); b.lastChild.textContent = on ? 'Now tap a spot on the map' : 'Tap the map to set start'; if (map) $('#map').classList.toggle('picking', on); }
+  $('#btn-pick').addEventListener('click', function () { setPicking(!picking); });
+  function drawMap(fit) {
+    if (!map) return;
+    var o = origin(), r = S.settings.radiusM, d = S.quest.dest, st = S.quest.status;
+    mapLayer.clearLayers();
+    var circle = L.circle([o.lat, o.lng], { radius: r, color: '#47d3ff', weight: 2, dashArray: '6 6', fillColor: '#47d3ff', fillOpacity: 0.07 }).addTo(mapLayer);
+    L.circleMarker([o.lat, o.lng], { radius: 7, color: '#fff', weight: 2, fillColor: '#47d3ff', fillOpacity: 1 }).addTo(mapLayer);
+    if (d && st !== 'idle') {
+      L.polyline([[o.lat, o.lng], [d.lat, d.lng]], { color: '#9677ff', weight: 2, dashArray: '4 8' }).addTo(mapLayer);
+      L.marker([d.lat, d.lng], { icon: L.divIcon({ className: 'gq-pin' + (st === 'arrived' ? ' done' : ''), html: '<i></i>', iconSize: [26, 26], iconAnchor: [13, 13] }), keyboard: false }).addTo(mapLayer);
+    }
+    if (fit) { map.invalidateSize(); map.fitBounds(circle.getBounds(), { padding: [14, 14], animate: false }); }
+  }
+
+  /* radar */
+  var raf = 0, sweep = 0;
+  function drawRadar() {
+    if (map) return;
+    var cv = $('#radar'); if (!cv || !cv.offsetWidth) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1), s = cv.offsetWidth;
+    if (cv.width !== Math.round(s * dpr)) { cv.width = cv.height = Math.round(s * dpr); }
+    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, s, s);
+    var cx = s / 2, R = s / 2 - 10;
+    var g = c.createRadialGradient(cx, cx, 0, cx, cx, R + 10); g.addColorStop(0, '#0b2238'); g.addColorStop(1, '#040813'); c.fillStyle = g; c.fillRect(0, 0, s, s);
+    c.strokeStyle = 'rgba(71,211,255,.28)'; c.lineWidth = 1; c.font = '11px "Share Tech Mono", monospace'; c.fillStyle = 'rgba(191,234,255,.75)'; c.textAlign = 'center';
+    var rM = S.settings.radiusM;
+    [1 / 3, 2 / 3, 1].forEach(function (f) { c.beginPath(); c.arc(cx, cx, R * f, 0, 6.2832); c.stroke(); c.fillText(G.formatDistance(rM * f), cx + R * f * 0.707 + 2, cx - R * f * 0.707 - 4); });
+    c.beginPath(); c.moveTo(cx, cx - R); c.lineTo(cx, cx + R); c.moveTo(cx - R, cx); c.lineTo(cx + R, cx); c.stroke();
+    for (var a = 0; a < 360; a += 10) { var t = a % 90 === 0 ? 10 : 5, an = a * Math.PI / 180; c.beginPath(); c.moveTo(cx + Math.sin(an) * R, cx - Math.cos(an) * R); c.lineTo(cx + Math.sin(an) * (R - t), cx - Math.cos(an) * (R - t)); c.stroke(); }
+    c.fillStyle = '#bfeaff'; c.fillText('N', cx, cx - R + 24); c.fillText('S', cx, cx + R - 14); c.fillText('E', cx + R - 12, cx + 4); c.fillText('W', cx - R + 12, cx + 4);
+    if (raf) { /* sweep */
+      var grd = c.createConicGradient ? c.createConicGradient(sweep, cx, cx) : null;
+      if (grd) { grd.addColorStop(0, 'rgba(71,211,255,0)'); grd.addColorStop(.92, 'rgba(71,211,255,0)'); grd.addColorStop(1, 'rgba(71,211,255,.28)'); c.fillStyle = grd; c.beginPath(); c.arc(cx, cx, R, 0, 6.2832); c.fill(); }
+    }
+    c.fillStyle = '#47d3ff'; c.shadowColor = '#47d3ff'; c.shadowBlur = 12; c.beginPath(); c.arc(cx, cx, 5, 0, 6.2832); c.fill();
+    var d = S.quest.dest;
+    if (d && S.quest.status !== 'idle') {
+      var rr = Math.min(R, d.distanceM / rM * R);
+      var an2 = d.bearingDeg * Math.PI / 180, x = cx + Math.sin(an2) * rr, y = cx - Math.cos(an2) * rr;
+      var done = S.quest.status === 'arrived', cancelled = S.quest.status === 'cancelled';
+      var col = done ? '#6be3b0' : cancelled ? '#8fa6c4' : '#9677ff';
+      c.shadowColor = col; c.shadowBlur = 16; c.strokeStyle = col; c.fillStyle = col; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(x, y - 9); c.lineTo(x + 7, y); c.lineTo(x, y + 9); c.lineTo(x - 7, y); c.closePath(); c.fill();
+      c.shadowBlur = 0; c.setLineDash([4, 5]); c.globalAlpha = .6; c.beginPath(); c.moveTo(cx, cx); c.lineTo(x, y); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
+    }
+    c.shadowBlur = 0;
+  }
+  function startRadar() {
+    stopRadar(); if (map) return; if (reduced) { drawRadar(); return; }
+    var last = 0;
+    (function loop(ts) { raf = requestAnimationFrame(loop); if (ts - last < 50) return; last = ts; sweep = (sweep + 0.06) % 6.2832; drawRadar(); })(0);
+  }
+  function stopRadar() { if (raf) cancelAnimationFrame(raf); raf = 0; }
+
+  /* ---------- GHOST ---------- */
+  var gs = null, gt = 0, WORDS = ['whisper', 'north', 'lantern', 'gate', 'cold', 'here', 'moon', 'behind', 'stay', 'open', 'key', 'hollow', 'echo', 'listen', 'water', 'stone'];
+  var emf = 0.3, MAX_REC = 5;
+  function fmt(sec) { sec = Math.max(0, Math.floor(sec)); return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0'); }
+  function renderGhost() {
+    var on = !!gs, st = $('#gstatus'); st.textContent = on ? 'Investigating' : 'Standby'; st.dataset.s = on ? 'navigating' : 'idle';
+    $('#btn-start').disabled = on; $('#btn-end').disabled = !on; $('#btn-rec').disabled = !on;
+    $('#g-count').textContent = gs ? gs.finds : 0; $('#g-time').textContent = gs ? fmt((Date.now() - gs.start) / 1000) : '00:00';
+    renderNotes();
+    if (on) ghostRun();
+  }
+  function renderNotes() {
+    var list = S.notes.slice(0, 20);
+    $('#notes').innerHTML = list.length ? list.map(function (n) { return '<div class="noteitem"><span class="cap">' + esc(n.at) + '</span><div>' + esc(n.text) + '</div></div>'; }).join('') : '<p class="small muted">No notes yet.</p>';
+  }
+  function ghostRun() {
+    clearInterval(gt); if (!gs) return;
+    var tick = 0;
+    gt = setInterval(function () {
+      tick++;
+      $('#g-time').textContent = fmt((Date.now() - gs.start) / 1000);
+      emf += (Math.random() - 0.5) * 0.9; if (Math.random() < 0.03) emf += 3 + Math.random() * 3; emf = Math.max(0.1, Math.min(8, emf * 0.96 + 0.02));
+      var lv = Math.min(5, Math.floor(emf / 1.4) + (emf > 0.8 ? 1 : 0));
+      $$('#emf i').forEach(function (b, i) { b.className = i < lv ? 'on' + (i === 4 ? ' max' : i >= 2 ? ' hi' : '') : ''; });
+      $('#emf-val').textContent = emf.toFixed(1) + ' mG';
+      $('#sb-freq').textContent = 'FM ' + (87.5 + Math.random() * 20).toFixed(1);
+      if (tick % 28 === 0 && Math.random() < 0.8) {
+        var w = WORDS[Math.floor(Math.random() * WORDS.length)], log = $('#sb-log');
+        log.insertAdjacentHTML('afterbegin', '<div>' + fmt((Date.now() - gs.start) / 1000) + '  ' + esc(w) + '</div>');
+        while (log.children.length > 12) log.removeChild(log.lastChild);
+      }
+    }, 250);
+  }
+  function ghostPause() { clearInterval(gt); gt = 0; }
+  $('#btn-start').addEventListener('click', function () {
+    gs = { start: Date.now(), finds: 0, lastRec: 0 };
+    $('#g-msg').textContent = 'Investigation started. Simulated tools are running.'; $('#sb-log').innerHTML = ''; renderGhost();
+  });
+  $('#btn-rec').addEventListener('click', function () {
+    if (!gs) return;
+    var now = Date.now();
+    if (gs.finds >= MAX_REC) { $('#g-msg').textContent = 'That is the limit of ' + MAX_REC + ' discoveries for one session. End this investigation and begin another.'; return; }
+    if (now - gs.lastRec < 15000) { $('#g-msg').textContent = 'The air is still. Wait a few seconds before the next discovery.'; return; }
+    gs.lastRec = now; gs.finds++;
+    var roll = G.rollCollectible('ghost', { sessionSec: (now - gs.start) / 1000 }, Math.random, S.collection);
+    var res = G.recordFind(S, { mode: 'ghost', item: roll.item, isNew: roll.isNew, demo: true }, now);
+    S = res.state; save(); refreshHud(); renderGhost(); reveal(res, roll, 'Simulated encounter.');
+  });
+  $('#btn-end').addEventListener('click', function () {
+    if (!gs) return;
+    var dur = (Date.now() - gs.start) / 1000, rec = { id: gs.start, start: gs.start, durationSec: Math.round(dur), finds: gs.finds };
+    var res = G.finishSession(S, dur, Date.now()); S = res.state;
+    S.sessions.unshift(rec); S.sessions = S.sessions.slice(0, 30); save(); refreshHud();
+    gs = null; ghostPause(); renderGhost();
+    $('#g-msg').textContent = res.completed ? 'Investigation complete: +' + res.xpGained + ' XP.' : 'Session saved. Investigations under a minute do not count toward quests or XP.';
+    if (res.completed && (res.levelUp || res.newBadges.length)) reveal({ state: S, xpGained: 0, levelUp: res.levelUp, newBadges: res.newBadges }, null, '');
+  });
+  $('#btn-note').addEventListener('click', function () {
+    var v = $('#note-in').value.trim(); if (!v) return;
+    var at = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + (gs ? ' \u00b7 session ' + fmt((Date.now() - gs.start) / 1000) : '');
+    S.notes.unshift({ ts: Date.now(), at: at, text: v.slice(0, 400) }); S.notes = S.notes.slice(0, 100);
+    save(); $('#note-in').value = ''; renderNotes(); toast('Note saved on this device.');
+  });
+
+  /* ---------- COLLECTION ---------- */
+  var filter = 'all';
+  function renderCollection() {
+    var owned = S.collection, all = G.COLLECTIBLES;
+    var have = all.filter(function (c) { return owned[c.id]; }).length;
+    $('#col-sub').textContent = have + ' of ' + all.length + ' found';
+    G.rollDaily(S, Date.now());
+    $('#quests').innerHTML = G.DAILY.map(function (q) {
+      var n = Math.min(q.need, S.daily[q.id] || 0), done = n >= q.need;
+      return '<div class="qrow' + (done ? ' done' : '') + '"><span class="tick">' + (done ? '<svg class="i"><use href="#i-check"/></svg>' : '') + '</span><div style="flex:1;min-width:0">' + esc(q.label) + '<div class="cap">' + (done ? 'Done' : n + ' / ' + q.need) + '</div></div><span class="mono small">+' + q.xp + ' XP</span></div>';
+    }).join('');
+    $$('#col-filter .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.f === filter)); });
+    $('#col-grid').innerHTML = all.filter(function (c) { return filter === 'all' || c.kind === filter; }).map(function (c) {
+      var n = owned[c.id] || 0;
+      if (!n) return '<div class="item locked"><div class="ico">' + icon(c.kind) + '</div><h4>Undiscovered</h4><span class="rar">' + cap(c.kind) + '</span><span class="small muted">' + (c.kind === 'badge' ? esc(c.blurb) : c.source === 'explore' ? 'Found while exploring.' : c.source === 'ghost' ? 'Found while ghost hunting.' : 'Found in either world.') + '</span></div>';
+      return '<div class="item ' + rar(c.rarity) + '">' + (n > 1 ? '<span class="cnt">x' + n + '</span>' : '') + '<div class="ico">' + icon(c.kind) + '</div><h4>' + esc(c.name) + '</h4><span class="rar">' + c.rarity + ' ' + c.kind + '</span><span class="small muted">' + esc(c.blurb) + '</span><button class="chip" data-share="' + c.id + '" style="align-self:flex-start;margin-top:4px;min-height:36px">Share</button></div>';
+    }).join('');
+    $('#history').innerHTML = S.discoveries.length ? S.discoveries.slice(0, 15).map(function (x) {
+      return '<div class="hrow"><span class="mono muted">' + esc(new Date(x.ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })) + '</span><strong>' + esc(x.title) + '</strong><span class="tagm">' + (x.mode === 'ghost' ? 'Ghost' : 'Explore') + '</span>' + (x.demo ? '<span class="tagm demo">Demo</span>' : '') + '</div>';
+    }).join('') : '<span class="muted">No discoveries yet. Enter either world to find your first.</span>';
+  }
+  $('#col-filter').addEventListener('click', function (e) { var c = e.target.closest('.chip'); if (!c) return; filter = c.dataset.f; renderCollection(); });
+  function copyText(text, done) {
+    var ok = function () { toast('Copied to clipboard.'); };
+    var fail = function () { showShare(text); };
+    try { navigator.clipboard.writeText(text).then(ok, fail); } catch (e) { fail(); }
+  }
+  function showShare(text) {
+    var m = $('#modal'); m.innerHTML = '<div class="reveal"><h3>Share</h3><p class="small muted">Select and copy this text.</p><input type="text" id="share-in" readonly value="' + esc(text) + '"><div class="btns" style="justify-content:center;margin-top:14px"><button class="btn" data-close>Close</button></div></div>';
+    m.classList.add('show'); var i = $('#share-in'); i.focus(); i.select();
+  }
+  document.addEventListener('click', function (e) {
+    var s = e.target.closest('[data-share]'); if (s) { var c = G.byId(s.dataset.share); copyText(G.shareText(c, S.collection[c.id] || 1)); }
+    if (e.target.closest('[data-close]')) closeModal();
+  });
+
+  /* ---------- reveal ---------- */
+  function closeModal() { $('#modal').classList.remove('show'); $('#modal').innerHTML = ''; }
+  function reveal(res, roll, note) {
+    var parts = [];
+    if (roll) {
+      var it = roll.item;
+      parts.push('<div class="reveal ' + rar(it.rarity) + '"><div class="ico">' + icon(it.kind) + '</div><div class="rar">' + it.rarity + ' ' + it.kind + (roll.isNew ? ' &middot; new' : ' &middot; duplicate') + '</div><h3>' + esc(it.name) + '</h3><p class="muted small">' + esc(it.blurb) + '</p>' + (note ? '<p class="cap">' + esc(note) + '</p>' : '') + '<p class="mono">+' + res.xpGained + ' XP</p>');
+    } else parts.push('<div class="reveal"><h3>Well done</h3>');
+    if (res.levelUp) parts.push('<p class="mono" style="color:var(--cyan)">Level ' + res.levelUp + ' reached</p>');
+    (res.newBadges || []).forEach(function (b) { parts.push('<p class="small"><strong>Badge earned:</strong> ' + esc(b.name) + '</p>'); });
+    var shareId = roll ? roll.item.id : '';
+    parts.push('<div class="btns" style="justify-content:center;margin-top:14px">' + (shareId ? '<button class="btn" data-share="' + shareId + '">Share</button>' : '') + '<button class="btn primary" data-close>Continue</button></div></div>');
+    var m = $('#modal'); m.innerHTML = parts.join(''); m.classList.add('show');
+    var b = $('[data-close]', m); if (b) b.focus();
+  }
+
+  /* ---------- SETTINGS ---------- */
+  function renderSettings() {
+    var L = G.levelFromXp(S.xp), owned = G.COLLECTIBLES.filter(function (c) { return S.collection[c.id]; }).length;
+    $('#s-lvl').textContent = L.level; $('#s-xp').textContent = S.xp + ' XP'; $('#s-col').textContent = owned + ' / ' + G.COLLECTIBLES.length; $('#s-dis').textContent = S.discoveries.length;
+    $('#s-store').textContent = storeOk ? 'Saved on this device in this browser.' : 'Saving is blocked in this view, so progress lasts only until you close the page.';
+    $('#reset-row').innerHTML = '<button class="btn danger" id="btn-reset">Reset progress</button>';
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('#btn-reset')) { $('#reset-row').innerHTML = '<button class="btn danger" id="btn-reset-yes">Yes, delete everything</button><button class="btn" id="btn-reset-no">Keep my progress</button>'; }
+    else if (e.target.closest('#btn-reset-no')) renderSettings();
+    else if (e.target.closest('#btn-reset-yes')) { S = G.defaultState(); sessionOrigin = null; gs = null; ghostPause(); save(); refreshHud(); renderSettings(); toast('Progress reset.'); }
+  });
+
+  function applyPhone() {
+    document.body.classList.toggle('phone', !!S.settings.phone);
+    var b = $('#btn-phone'); if (b) b.setAttribute('aria-pressed', String(!!S.settings.phone));
+    setTimeout(layout, 30);
+  }
+  $('#btn-phone').addEventListener('click', function () { S.settings.phone = !S.settings.phone; save(); applyPhone(); });
+
+  /* ---------- boot ---------- */
+  function boot() {
+    $('#wordmark').addEventListener('load', layout);
+    applyPhone(); applyArt({}); loadArt(); layout(); refreshHud(); netUpdate();
+    var sp = $('#splash'), hide = function () { sp.classList.add('gone'); };
+    sp.addEventListener('click', hide); setTimeout(hide, reduced ? 500 : 1700);
+    new ResizeObserver(layout).observe($('#stage'));
+  }
+  boot();
+})();
+</script>
