@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Karla:wght@400;500;700&family=Share+Tech+Mono&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
 /* Layout: one illustrated world with two physical entrances (stone left, gateway right); every other screen is a translucent panel floating over a dimmed copy of the same artwork. */
 :root {
@@ -144,10 +144,6 @@ label.lab { display: block; margin-bottom: 4px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media (max-width: 560px) { .two { grid-template-columns: 1fr; } }
 
-/* radar */
-.radarwrap { position: relative; width: min(100%, 380px); aspect-ratio: 1; margin: 0 auto; }
-#radar { width: 100%; height: 100%; display: block; border-radius: 50%; border: 1px solid var(--line); box-shadow: 0 0 36px rgba(71, 211, 255, .18), inset 0 0 40px rgba(71, 211, 255, .08); }
-.radarlabel { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); }
 
 /* ghost tools */
 .emf { display: flex; gap: 6px; margin: 8px 0; }
@@ -197,21 +193,84 @@ label.lab { display: block; margin-bottom: 4px; }
 
 body.phone { display: flex; align-items: center; justify-content: center; background: radial-gradient(60% 50% at 50% 40%, #0b1a33, #02040a); }
 body.phone #app { flex: none; width: min(100%, 390px); height: min(100%, 844px); border-radius: 38px; border: 2px solid rgba(130, 190, 255, .35); box-shadow: 0 0 70px rgba(71, 211, 255, .18); }
-#map { width: 100%; aspect-ratio: 1; max-height: 440px; border-radius: 16px; border: 1px solid var(--line); overflow: hidden; background: #0a1330; box-shadow: 0 0 36px rgba(71, 211, 255, .15); }
-#map[hidden] { display: none; }
-#map .leaflet-tile-pane { filter: invert(1) hue-rotate(190deg) saturate(.65) brightness(.88) contrast(.92); }
-#map.leaflet-container { font: inherit; background: #0a1330; }
-#map .leaflet-control-attribution { background: rgba(4, 8, 22, .75); color: var(--mute); }
-#map .leaflet-control-attribution a { color: var(--ice); }
-#map .leaflet-bar a { background: rgba(6, 12, 30, .9); color: var(--ice); border-color: var(--line); }
-#map.picking { cursor: crosshair; outline: 2px dashed var(--cyan); outline-offset: -2px; }
-.gq-pin i { display: block; width: 20px; height: 20px; margin: 3px; transform: rotate(45deg); background: var(--violet); border: 2px solid #fff; box-shadow: 0 0 16px var(--violet), 0 0 4px #fff; }
-.gq-pin.done i { background: var(--ok); box-shadow: 0 0 16px var(--ok); }
 details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--cyan); font-weight: 700; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
   #stage.zoom { transform: none; filter: none; }
 }
+
+/* ---------- map ---------- */
+.mapbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.mapbar .chip { display: inline-flex; align-items: center; gap: 6px; }
+.gqmap { position: relative; width: 100%; height: clamp(300px, 50vh, 480px); border-radius: 14px; border: 1px solid var(--line); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; background-color: #0a1330; background-image: linear-gradient(rgba(71, 211, 255, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(71, 211, 255, .08) 1px, transparent 1px); background-size: 40px 40px; box-shadow: 0 0 36px rgba(71, 211, 255, .15); }
+.gqmap.picking { outline: 2px dashed var(--cyan); outline-offset: -3px; cursor: crosshair; }
+.gqm-tiles, .gqm-over { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.gqm-tiles { filter: invert(1) hue-rotate(190deg) saturate(.65) brightness(.88) contrast(.92); }
+.gqm-over { pointer-events: none; }
+.gqm-ctl { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.gqm-ctl button { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: rgba(6, 12, 30, .88); color: var(--ice); font-size: 1.2rem; line-height: 1; }
+.gqm-attr { position: absolute; left: 6px; bottom: 4px; font-size: .68rem; padding: 1px 6px; border-radius: 6px; background: rgba(4, 8, 22, .75); }
+.gqm-attr a { color: var(--ice); }
+
+/* ---------- hunt ---------- */
+.hunt { border-color: rgba(150, 119, 255, .55); box-shadow: 0 0 40px rgba(150, 119, 255, .18); }
+.hunt-top { display: flex; align-items: center; gap: 12px; }
+.hunt-top .big { flex: 1; min-width: 0; }
+.bigdist { font-family: var(--font-data); font-size: 2.3rem; line-height: 1; color: var(--ice); }
+.heatword { font-family: var(--font-display); font-size: 1.35rem; margin-top: 2px; }
+.heatword[data-l="0"] { color: #8fb4ff; } .heatword[data-l="1"] { color: #7fd3ff; } .heatword[data-l="2"] { color: #ffe08a; } .heatword[data-l="3"] { color: #ffb066; } .heatword[data-l="4"], .heatword[data-l="5"] { color: #ff7a7a; }
+#arrow { width: 120px; height: 120px; flex: none; }
+
+/* ---------- recorder ---------- */
+#rec-wave { width: 100%; height: 64px; display: block; border-radius: 10px; background: rgba(2, 5, 14, .7); border: 1px solid var(--line); }
+.rec-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ff5d5d; box-shadow: 0 0 10px #ff5d5d; margin-right: 8px; animation: pulse 1s infinite; }
+.clip { padding: 12px 0; border-bottom: 1px dashed rgba(130, 190, 255, .18); }
+.clip:last-child { border-bottom: 0; }
+.clip canvas { width: 100%; height: 46px; display: block; border-radius: 8px; background: rgba(2, 5, 14, .6); margin: 8px 0; }
+.clip .head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.clip .btns .btn { min-height: 40px; padding: 6px 12px; font-size: .88rem; }
+.clip input[type=text] { min-height: 38px; padding: 6px 10px; font-size: .9rem; margin-top: 8px; }
+.on-air { border-color: #ff5d5d !important; }
+
+/* ---------- welcome ---------- */
+.welcome { width: min(100%, 440px); max-height: 92%; overflow: auto; padding: 24px 22px; border-radius: 20px; background: rgba(6, 12, 30, .96); border: 1px solid var(--line); box-shadow: 0 0 60px rgba(71, 211, 255, .25); animation: rise .5s ease-out; }
+.welcome h3 { margin: 0 0 8px; font: 400 1.6rem/1.15 var(--font-display); text-align: center; }
+.welcome ul { margin: 8px 0 14px; padding-left: 1.1em; }
+.welcome li { margin-bottom: 6px; }
+.status[data-s="navigating"]::before { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
+
+details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--cyan); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
+  #stage.zoom { transform: none; filter: none; }
+}
+#home-ui { transition: opacity .3s; }
+#app.in-panel #home-ui { opacity: 0; pointer-events: none; visibility: hidden; transition: opacity .3s, visibility 0s .3s; }
+#app.in-panel #home-ui > * { pointer-events: none; }
+[hidden] { display: none !important; }
+.phead { background: rgba(3, 6, 16, .94); }
+#p-sls { background: #000 !important; }
+#sls-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.sls-top { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; }
+.sls-msg { position: absolute; left: 16px; right: 16px; top: 72px; padding: 10px 14px; border-radius: 12px; background: rgba(4, 9, 24, .82); border: 1px solid var(--line); font-size: .86rem; }
+.sls-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 8px; background: linear-gradient(0deg, rgba(0, 0, 0, .82), rgba(0, 0, 0, 0)); }
+.sls-bar .btn { min-height: 44px; }
+#emf-cv { width: 100%; height: 150px; display: block; }
+#sb-cv { width: 100%; height: 96px; display: block; }
+.inst { padding: 14px; }
+.ihead { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ihead h3 { margin: 0; flex: 1; }
+.ihead .mono { font-size: 1.1rem; color: var(--ice); }
+.tag { font-family: var(--font-data); font-size: .64rem; letter-spacing: .14em; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); color: var(--mute); }
+.tag.real { color: var(--ok); border-color: rgba(107, 227, 176, .5); }
+.tag.sim { color: var(--warn); border-color: rgba(255, 157, 107, .5); }
+.sensors { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sensors > div { padding: 10px 12px; border-radius: 10px; background: rgba(2, 5, 14, .6); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.sensors b { font: 400 1.15rem var(--font-data); color: var(--ice); }
+.heatbar { display: flex; gap: 5px; margin-top: 12px; }
+.heatbar i { flex: 1; height: 8px; border-radius: 3px; background: rgba(150, 190, 255, .14); }
+.heatbar i.on { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.heatbar i.on.h3 { background: #ffb066; box-shadow: 0 0 8px #ffb066; }
 </style></head><body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -227,6 +286,11 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V4M6 4h11l-2 4 2 4H6"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
 </svg>
 
 <div id="app">
@@ -272,78 +336,85 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
       <span class="status" id="qstatus" data-s="idle">Idle</span>
     </div>
     <div class="pscroll"><div class="col">
-      <div class="card">
- <div id="map" hidden role="application" aria-label="Map showing your start point, the maximum distance circle and the generated coordinate"></div>
-        <div class="radarwrap" id="radarwrap"><canvas id="radar" width="380" height="380" role="img" aria-label="Radar view of the exploration radius with your start point in the centre and the generated destination as a marker"></canvas></div>
-        <p class="cap" id="radar-cap" style="text-align:center;margin-top:10px">Radar view, north up. Not a street map.</p>
-        <p class="cap" id="map-cap" hidden style="text-align:center;margin-top:10px">Map data &copy; OpenStreetMap contributors. The dashed circle is your maximum distance. The diamond is a random coordinate, not a checked place.</p>
-        <div class="btns" id="pick-row" hidden style="justify-content:center;margin-top:10px"><button class="btn" id="btn-pick" aria-pressed="false"><svg class="i"><use href="#i-pin"/></svg>Tap the map to set start</button></div>
-      </div>
 
-      <div class="card">
-        <h3>Start point</h3>
-        <p class="small" id="origin-text"></p>
-        <div class="btns">
-          <button class="btn" id="btn-loc"><svg class="i"><use href="#i-pin"/></svg>Use my location</button>
+      <div class="card hunt" id="hunt-card" hidden>
+        <div class="hunt-top">
+          <div class="big">
+            <div class="cap">Distance to the mark</div>
+            <div class="bigdist" id="h-dist">--</div>
+            <div class="heatword" id="h-heat" data-l="0">Waiting for GPS</div>
+            <div class="small muted" id="h-sub"></div>
+          </div>
+          <canvas id="arrow" width="120" height="120" role="img" aria-label="Arrow pointing towards the target"></canvas>
         </div>
-        <p class="small muted" style="margin-top:10px">Your position is only used on this device to place you on the radar. It is never uploaded.</p>
-        <p class="small" id="loc-msg" role="status"></p>
-        <details class="dd">
-          <summary>Or type or paste a start point</summary>
-          <p class="small muted">Copy a coordinate from MAPS.ME or any map app (for example 52.3791, 4.9003) and paste it here. It stays in memory only.</p>
-          <label class="cap lab" for="start-in">Latitude, longitude</label>
-          <input type="text" id="start-in" inputmode="decimal" autocomplete="off" placeholder="52.3791, 4.9003">
-          <div class="btns" style="margin-top:10px"><button class="btn" id="btn-start-coord">Use these coordinates</button></div>
-        </details>
+        <div class="heatbar" id="h-bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="btns" style="margin-top:12px">
+          <button class="btn primary" id="h-checkin"><svg class="i"><use href="#i-flag"/></svg>I'm here</button>
+          <button class="btn" id="h-compass" hidden>Enable compass</button>
+          <button class="btn danger" id="h-stop">Cancel quest</button>
+        </div>
+        <p class="small" id="h-msg" role="status" style="margin-top:10px"></p>
       </div>
 
       <div class="card">
-        <h3>Exploration radius</h3>
-        <div class="kv"><span>Radius</span><span id="rad-out"></span></div>
-        <input type="range" id="rad" min="100" max="5000" step="50" aria-label="Exploration radius in metres">
-        <div class="chips" id="rad-chips" style="margin-top:6px">
+        <div class="mapbar">
+          <button class="chip" id="btn-loc"><svg class="i"><use href="#i-locate"/></svg> My location</button>
+          <button class="chip" id="pick-start" aria-pressed="false"><svg class="i"><use href="#i-pin"/></svg> Set start</button>
+          <button class="chip" id="pick-target" aria-pressed="false"><svg class="i"><use href="#i-flag"/></svg> Set target</button>
+        </div>
+        <div id="map" role="application" aria-label="Map showing your start point, the maximum distance circle and the target"></div>
+        <p class="small muted" id="loc-msg" role="status" style="margin-top:10px"></p>
+      </div>
+
+      <div class="card">
+        <h3>How far will you go?</h3>
+        <div class="kv"><span>Max distance</span><span id="rad-out"></span></div>
+        <input type="range" id="rad" min="100" max="5000" step="50" aria-label="Maximum distance in metres">
+        <div class="chips" id="rad-chips" style="margin:2px 0 12px">
           <button class="chip" data-r="250" aria-pressed="false">250 m</button>
           <button class="chip" data-r="500" aria-pressed="false">500 m</button>
           <button class="chip" data-r="1000" aria-pressed="false">1 km</button>
           <button class="chip" data-r="2000" aria-pressed="false">2 km</button>
           <button class="chip" data-r="5000" aria-pressed="false">5 km</button>
         </div>
-        <label class="cap lab" for="rad-num" style="margin-top:12px">Exact maximum distance (metres, 50 to 5000)</label>
-        <input type="number" id="rad-num" min="50" max="5000" step="10" inputmode="numeric">
-        <div class="btns" style="margin-top:14px"><button class="btn primary" id="btn-gen"><svg class="i"><use href="#i-diamond"/></svg>Generate destination</button></div>
+        <div class="btns"><button class="btn primary" id="btn-gen"><svg class="i"><use href="#i-diamond"/></svg>Find a spot</button></div>
+        <details class="dd" style="margin-top:8px">
+          <summary>Type or paste coordinates</summary>
+          <p class="small muted">From any map app, for example 52.3791, 4.9003.</p>
+          <input type="text" id="coord-in" inputmode="decimal" autocomplete="off" placeholder="52.3791, 4.9003" aria-label="Latitude, longitude">
+          <div class="btns" style="margin-top:10px"><button class="btn" id="coord-start">Use as start</button><button class="btn" id="coord-target">Use as target</button></div>
+        </details>
       </div>
 
       <div class="card" id="dest-card" hidden>
-        <h3>Generated coordinate</h3>
+        <h3 id="d-title">Your mark</h3>
         <div class="kv"><span>Coordinate</span><span id="d-coord"></span></div>
-        <div class="kv"><span>Distance</span><span id="d-dist"></span></div>
-        <div class="kv"><span>Direction</span><span id="d-dir"></span></div>
-        <div class="kv"><span>Verified safe</span><span class="sim">No. Unchecked.</span></div>
-        <div class="note" style="margin:12px 0"><svg class="i"><use href="#i-warn"/></svg><div>This is a random point, not a recommended place. Look at it on a map before you go. Skip it if it is private land, a road, a railway, water, a construction site or an unsafe building. Pick a safe public spot near it instead.</div></div>
-        <div class="btns">
-          <a class="btn" id="a-osm" target="_blank" rel="noopener">Inspect on map</a>
-          <a class="btn" id="a-apple" target="_blank" rel="noopener">Walk there in Apple Maps</a>
-          <a class="btn" id="a-om" href="#" rel="noopener">Open in Organic Maps</a>
-          <a class="btn" id="a-mapsme" href="#" rel="noopener">Try MAPS.ME</a>
-          <button class="btn" id="btn-copy">Copy coordinates</button>
+        <div class="kv"><span>From start</span><span id="d-dist"></span></div>
+        <div class="kv"><span>Checked for safety</span><span class="sim">No. Scout it first.</span></div>
+        <div class="btns" style="margin-top:12px">
+          <a class="btn primary" id="a-om" href="#" rel="noopener"><svg class="i"><use href="#i-pin"/></svg>Scout in Organic Maps</a>
+          <button class="btn violet" id="btn-hunt"><svg class="i"><use href="#i-compass"/></svg>Start the hunt</button>
         </div>
-        <p class="small muted" style="margin-top:8px">Organic Maps and MAPS.ME are separate apps with their own offline maps. The buttons hand them the coordinate, so open them only if the app is installed. If a link does not open, copy the coordinates and paste them into the app's search bar.</p>
+        <details class="dd" style="margin-top:6px">
+          <summary>More ways to look</summary>
+          <div class="btns" style="margin-top:6px">
+            <a class="btn" id="a-osm" target="_blank" rel="noopener">OpenStreetMap</a>
+            <a class="btn" id="a-apple" target="_blank" rel="noopener">Apple Maps</a>
+            <a class="btn" id="a-mapsme" href="#" rel="noopener">MAPS.ME</a>
+            <button class="btn" id="btn-copy">Copy coordinates</button>
+          </div>
+        </details>
+        <p class="small muted" style="margin-top:8px">Organic Maps works offline once you have downloaded your region. If it does not open, the coordinates are copied. Paste them into its search bar. Skip any mark that is private land, a road, a railway, water or unsafe.</p>
         <div class="btns" style="margin-top:10px">
-          <button class="btn primary" id="btn-checkin">Check in</button>
+          <button class="btn" id="btn-checkin-demo" hidden>Demo check-in (reduced reward)</button>
           <button class="btn danger" id="btn-cancel">Cancel quest</button>
         </div>
-        <p class="small" id="checkin-msg" role="status" style="margin-top:10px"></p>
       </div>
 
       <div class="card">
         <h3>Latest finds</h3>
         <div id="ex-finds" class="small"></div>
         <div class="btns" style="margin-top:10px"><button class="btn" data-open="collection"><svg class="i"><use href="#i-book"/></svg>Open collection</button></div>
-      </div>
-
-      <div class="card">
-        <h3>Safety</h3>
-        <p class="small muted">You can cancel any quest and head home at any time. Stay on public ground, follow local laws, keep off roads and tracks, and do not enter unsafe or abandoned buildings. Do not share a precise live location in a public stream.</p>
       </div>
     </div></div>
   </section>
@@ -352,47 +423,86 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   <section class="panel" id="p-ghost" data-tint="ghost" aria-label="Ghost hunting">
     <div class="phead">
       <button class="back" data-home aria-label="Return through the portal to the main world"><svg class="i"><use href="#i-back"/></svg>Home</button>
-      <div class="grow"><h2>Beyond the Gate</h2><p class="cap sub">Ghost hunting</p></div>
+      <div class="grow"><h2>Beyond the Gate</h2><p class="cap sub">Investigation toolkit</p></div>
       <span class="status" id="gstatus" data-s="idle">Standby</span>
     </div>
     <div class="pscroll"><div class="col">
-      <div class="note"><svg class="i"><use href="#i-warn"/></svg><div><strong>Entertainment simulation.</strong> A phone cannot detect spirits. The meter and the spirit box below produce made-up readings for atmosphere and play.</div></div>
-
       <div class="card">
         <h3>Investigation</h3>
-        <div class="kv"><span>Session time</span><span id="g-time">00:00</span></div>
-        <div class="kv"><span>Discoveries this session</span><span id="g-count">0</span></div>
-        <div class="btns" style="margin-top:12px">
+        <div class="kv"><span>Session</span><span><span id="g-time">00:00</span> &middot; <span id="g-count">0</span> logged</span></div>
+        <div class="btns" style="margin-top:10px">
           <button class="btn violet" id="btn-start">Start investigation</button>
-          <button class="btn" id="btn-rec" disabled>Record discovery</button>
-          <button class="btn" id="btn-end" disabled>End investigation</button>
+          <button class="btn" id="btn-rec" disabled>Log a sighting</button>
+          <button class="btn" id="btn-end" disabled>End</button>
         </div>
-        <p class="small" id="g-msg" role="status" style="margin-top:10px"></p>
+        <p class="small" id="g-msg" role="status" style="margin-top:8px"></p>
       </div>
 
-      <div class="two">
-        <div class="card">
-          <h3>EMF meter <span class="sim mono small">SIMULATED</span></h3>
-          <div class="readout" id="emf-val">0.0 mG</div>
-          <div class="emf" id="emf" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-          <p class="small muted">Random readings, not a measurement.</p>
+      <div class="card">
+        <h3>SLS camera</h3>
+        <p class="small muted">Live camera with a dot projection and a figure fitted to motion in the picture.</p>
+        <div class="btns"><button class="btn primary" data-open="sls"><svg class="i"><use href="#i-cam"/></svg>Open SLS camera</button></div>
+      </div>
+
+      <div class="card inst">
+        <div class="ihead"><h3>EMF</h3><span class="tag sim" id="emf-tag">SIM</span><span class="mono" id="emf-val">0.0 &micro;T</span></div>
+        <canvas id="emf-cv" role="img" aria-label="EMF gauge and trace"></canvas>
+      </div>
+
+      <div class="card inst">
+        <div class="ihead"><h3>Spirit box</h3><span class="tag sim">SIM</span><span class="mono" id="sb-freq">FM --.-</span></div>
+        <canvas id="sb-cv" role="img" aria-label="Radio scan display"></canvas>
+        <div class="btns" style="margin-top:10px"><button class="btn" id="btn-box" aria-pressed="false">Spirit box</button></div>
+      </div>
+
+      <div class="card inst">
+        <div class="ihead"><h3>Environment</h3><span class="tag real">REAL</span></div>
+        <div class="sensors">
+          <div><span class="cap">Audio level</span><b id="sv-audio">--</b></div>
+          <div><span class="cap">Motion</span><b id="sv-motion">--</b></div>
+          <div><span class="cap">Heading</span><b id="sv-head">--</b></div>
+          <div><span class="cap">Magnetic</span><b id="sv-mag">--</b></div>
         </div>
-        <div class="card">
-          <h3>Spirit box <span class="sim mono small">SIMULATED</span></h3>
-          <div class="readout sb" id="sb-freq">FM --.-</div>
-          <div class="flog" id="sb-log" aria-live="off"></div>
-          <p class="small muted">Words are picked from a fixed list.</p>
+        <div class="btns" style="margin-top:10px"><button class="btn" id="btn-sens" aria-pressed="false">Enable sensors</button></div>
+        <p class="small muted" id="sens-msg" style="margin-top:8px">Readings come from your phone's own sensors. Where a phone has no magnetometer, the EMF display stays simulated and is marked SIM.</p>
+      </div>
+
+      <div class="card"><h3>Event log</h3><div id="ev-log" class="small"></div></div>
+
+      <div class="card" id="rec-card">
+        <h3>EVP recorder</h3>
+        <p class="small muted">Record a quiet room, ask a question, leave gaps, then listen back with headphones. Tap Mark when something sounds odd.</p>
+        <canvas id="rec-wave" aria-hidden="true"></canvas>
+        <div class="kv" style="margin-top:8px"><span id="rec-state">Ready</span><span id="rec-time">00:00 / 03:00</span></div>
+        <div class="btns">
+          <button class="btn violet" id="rec-go"><svg class="i"><use href="#i-mic"/></svg>Record</button>
+          <button class="btn" id="rec-mark" disabled>Mark moment</button>
         </div>
+        <p class="small" id="rec-msg" role="status" style="margin-top:8px"></p>
+        <h3 style="margin-top:14px">Your recordings</h3>
+        <div id="clips"></div>
       </div>
 
       <div class="card">
         <h3>Investigation notes</h3>
-        <label class="cap lab" for="note-in">Note (saved on this device)</label>
-        <textarea id="note-in" maxlength="400" placeholder="What did you notice?"></textarea>
+        <textarea id="note-in" maxlength="400" placeholder="What did you notice?" aria-label="Investigation note"></textarea>
         <div class="btns" style="margin-top:10px"><button class="btn" id="btn-note">Save note</button></div>
         <div id="notes" style="margin-top:8px"></div>
       </div>
     </div></div>
+  </section>
+
+  <!-- SLS CAMERA -->
+  <section class="panel" id="p-sls" aria-label="SLS camera">
+    <canvas id="sls-cv" role="img" aria-label="Live camera view with a dot projection and a figure fitted to detected motion"></canvas>
+    <div class="sls-top"><button class="back" data-open="ghost" aria-label="Back to ghost hunting"><svg class="i"><use href="#i-back"/></svg>Back</button><span class="status" id="sls-status" data-s="idle">Camera off</span></div>
+    <div class="sls-msg" id="sls-msg" role="status" hidden></div>
+    <div class="sls-bar">
+      <div class="chips"><button class="chip" id="sls-dots" aria-pressed="true">Dots</button><button class="chip" id="sls-track" aria-pressed="true">Body tracking</button><button class="chip" id="sls-fig" aria-pressed="true">Skeleton</button><button class="chip" id="sls-flip">Flip camera</button></div>
+      <label class="cap" for="sls-sens">Sensitivity</label>
+      <input type="range" id="sls-sens" min="1" max="9" step="1" value="5">
+      <div class="btns"><button class="btn primary" id="sls-snap">Snapshot</button><button class="btn" id="sls-log">Log sighting</button></div>
+    </div>
   </section>
 
   <!-- COLLECTION -->
@@ -402,10 +512,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
       <div class="grow"><h2>The Collection</h2><p class="cap sub" id="col-sub">Ghosts, artefacts and badges</p></div>
     </div>
     <div class="pscroll"><div class="col">
-      <div class="card">
-        <h3>Today's quests</h3>
-        <div id="quests"></div>
-      </div>
+      <div class="card"><h3>Today's quests</h3><div id="quests"></div></div>
       <div class="chips" id="col-filter" role="group" aria-label="Filter collection">
         <button class="chip" data-f="all" aria-pressed="true">All</button>
         <button class="chip" data-f="ghost" aria-pressed="false">Ghosts</button>
@@ -413,10 +520,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
         <button class="chip" data-f="badge" aria-pressed="false">Badges</button>
       </div>
       <div class="grid" id="col-grid"></div>
-      <div class="card">
-        <h3>Discovery history</h3>
-        <div id="history" class="small"></div>
-      </div>
+      <div class="card"><h3>Discovery history</h3><div id="history" class="small"></div></div>
     </div></div>
   </section>
 
@@ -424,7 +528,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   <section class="panel" id="p-settings" aria-label="Settings and privacy">
     <div class="phead">
       <button class="back" data-home aria-label="Back to the main world"><svg class="i"><use href="#i-back"/></svg>Home</button>
-      <div class="grow"><h2>Settings &amp; Privacy</h2><p class="cap sub">GhostQuest preview build</p></div>
+      <div class="grow"><h2>Settings &amp; Privacy</h2><p class="cap sub">GhostQuest</p></div>
     </div>
     <div class="pscroll"><div class="col">
       <div class="card">
@@ -437,38 +541,33 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
       </div>
 
       <div class="card">
-        <h3>Privacy and permissions</h3>
-        <p class="small">No account is needed. Progress, notes and history are stored only in this browser on this device.</p>
-        <p class="small"><strong>Location.</strong> Asked for only when you tap "Use my location". It places you on the radar and checks arrival. It is never uploaded. Discoveries keep only a rounded position, accurate to about 100 m.</p>
-        <p class="small"><strong>Microphone and camera.</strong> Not used.</p>
-        <p class="small"><strong>Creators.</strong> If you stream, do not show your live position on screen. Overlays will never show coordinates unless you switch that on yourself.</p>
-        <p class="small"><strong>Check-ins.</strong> A check-in earns the full reward only with a real location fix close to the destination. Without one, you can do a labelled demo check-in for a reduced reward.</p>
-      </div>
-
-      <div class="card">
-        <h3>What is simulated in this build</h3>
-        <ul class="small" style="margin:0;padding-left:1.1em">
-          <li>The radar is a plain radar view, not a street map. Street maps and routes need a map service this preview cannot reach.</li>
-          <li>Generated destinations are random coordinates. Nothing checks roads, water or access.</li>
-          <li>The EMF meter and spirit box are random entertainment effects.</li>
-          <li>Offline: once loaded, the game keeps working without a connection. Installing it as an app is planned for the standalone version.</li>
-        </ul>
+        <h3>Privacy</h3>
+        <p class="small">No account. Everything stays on this device: progress, notes, your start point and target, and your recordings. Nothing is uploaded.</p>
+        <p class="small"><strong>Location</strong> is asked for only when you tap My location or start a hunt. Discoveries keep only a position rounded to about 100 m.</p>
+        <p class="small"><strong>Camera</strong> is used only while the SLS camera is open. Frames are analysed on the device and are never stored or uploaded unless you tap Snapshot.</p>
+        <p class="small"><strong>Microphone</strong> is used only while you record or while Sensors are on (a volume reading, nothing is recorded). Recordings are saved in this browser and can be deleted any time.</p>
+        <p class="small"><strong>Body tracking</strong> runs on your device. The first time, the tracker files (about 15 MB) are fetched from jsDelivr and Google storage, which see your IP address as any download does; the video never leaves the phone.</p>
+        <p class="small"><strong>Maps</strong> load tiles from OpenStreetMap, which sees the tiles your phone asks for. Visited tiles are cached for offline use.</p>
+        <p class="small"><strong>Streaming?</strong> Keep your live position off screen.</p>
+        <div class="btns" style="margin-top:8px">
+          <button class="btn" id="btn-welcome">Show the opening notice</button>
+          <button class="btn" id="btn-forget">Forget start point and target</button>
+        </div>
       </div>
 
       <div class="card">
         <h3>Display</h3>
-        <p class="small muted">Phone preview shows the game in a phone-sized frame, so you can see the portrait layout on a larger screen.</p>
-        <div class="chips"><button class="chip" id="btn-phone" aria-pressed="false">Phone preview</button></div>
+        <div class="chips"><button class="chip" id="btn-phone" aria-pressed="false">Phone-sized frame</button></div>
       </div>
 
       <div class="card">
-        <h3>Install on your iPad or phone</h3>
-        <p class="small muted">When GhostQuest is opened from its own web address, tap Share, then Add to Home Screen. It then opens full screen like an app and keeps working without a connection. A file opened straight from Files does not do this.</p>
+        <h3>Install</h3>
+        <p class="small muted">Open GhostQuest from its web address in Safari, tap Share, then Add to Home Screen. It then opens full screen and keeps working offline.</p>
       </div>
 
       <div class="card">
         <h3>Your artwork</h3>
-        <p class="small muted">Swap in a new image from this device. It is stored in this browser only. Use a world image with the same layout (stone left, gateway right) so the entrances line up.</p>
+        <p class="small muted">Swap in your own images. They are stored in this browser only.</p>
         <label class="cap lab" for="art-world">World background</label>
         <input type="file" id="art-world" accept="image/*">
         <label class="cap lab" for="art-word" style="margin-top:10px">Name (light letters on black)</label>
@@ -480,29 +579,18 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
       </div>
 
       <div class="card">
-        <h3>Coming later</h3>
-        <ul class="small" style="margin:0;padding-left:1.1em">
-          <li>Creator tools: stream overlay, session markers, shareable discovery cards.</li>
-          <li>Street maps and walking routes where a map service is available.</li>
-          <li>Optional cosmetic packs. The game stays fully playable for free. Digital purchases may need to use Apple App Store and Google Play billing.</li>
-          <li>Real sensor and audio tools, clearly labelled as entertainment.</li>
-        </ul>
-      </div>
-
-      <div class="card">
         <h3>Reset</h3>
-        <p class="small muted">Deletes XP, collection, history and notes from this device.</p>
-        <div class="btns" id="reset-row"><button class="btn danger" id="btn-reset">Reset progress</button></div>
+        <p class="small muted">Deletes XP, collection, history, notes and recordings from this device.</p>
+        <div class="btns" id="reset-row"><button class="btn danger" id="btn-reset">Reset everything</button></div>
       </div>
     </div></div>
   </section>
 
-  <div id="modal" role="dialog" aria-modal="true" aria-label="Discovery"></div>
+  <div id="modal" role="dialog" aria-modal="true" aria-label="Notice"></div>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="splash" aria-hidden="true"><img id="splash-logo" alt=""></div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 /* GhostQuest game logic. Pure functions only (no DOM), so it can be tested in Node. */
 (function (root, factory) {
@@ -581,6 +669,43 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   }
   function appleMapsUrl(p) { return 'https://maps.apple.com/?ll=' + p.lat.toFixed(6) + ',' + p.lng.toFixed(6) + '&dirflg=w'; }
 
+  /* ---------- map math (Web Mercator, 256 px tiles) ---------- */
+  var MAXLAT = 85.0511287798;
+  function project(lat, lng, z) {
+    var sz = 256 * Math.pow(2, z), sn = Math.sin(rad(clamp(lat, -MAXLAT, MAXLAT)));
+    return { x: (lng + 180) / 360 * sz, y: (0.5 - Math.log((1 + sn) / (1 - sn)) / (4 * Math.PI)) * sz };
+  }
+  function unproject(x, y, z) {
+    var sz = 256 * Math.pow(2, z), n = Math.PI - 2 * Math.PI * y / sz;
+    return { lat: deg(Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))), lng: x / sz * 360 - 180 };
+  }
+  function metersPerPixel(lat, z) { return 156543.03392 * Math.cos(rad(lat)) / Math.pow(2, z); }
+  function circlePoints(c, r) { return [0, 90, 180, 270].map(function (b) { return destinationPoint(c, b, r); }); }
+  /* Centre and zoom that fit a set of points inside w x h pixels with padding. */
+  function fitView(pts, w, h, pad, maxZoom) {
+    var minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+    pts.forEach(function (p) { var q = project(p.lat, p.lng, 0); minx = Math.min(minx, q.x); maxx = Math.max(maxx, q.x); miny = Math.min(miny, q.y); maxy = Math.max(maxy, q.y); });
+    var dx = Math.max(1e-7, maxx - minx), dy = Math.max(1e-7, maxy - miny);
+    var z = Math.log(Math.min(Math.max(10, w - 2 * pad) / dx, Math.max(10, h - 2 * pad) / dy)) / Math.LN2;
+    z = clamp(z, 2, maxZoom || 18);
+    var c = unproject((minx + maxx) / 2, (miny + maxy) / 2, 0);
+    return { lat: c.lat, lng: c.lng, zoom: z };
+  }
+
+  /* ---------- the hunt: hot and cold ---------- */
+  function heat(distM) {
+    if (distM <= 40) return { level: 5, label: 'Right here' };
+    if (distM <= 100) return { level: 4, label: 'Burning' };
+    if (distM <= 250) return { level: 3, label: 'Hot' };
+    if (distM <= 600) return { level: 2, label: 'Warm' };
+    if (distM <= 1500) return { level: 1, label: 'Cool' };
+    return { level: 0, label: 'Cold' };
+  }
+  /* Angle to draw an arrow so it points at the target. heading = which way the phone faces (null = north up). */
+  function arrowAngle(bearingDeg, headingDeg) {
+    return ((bearingDeg - (headingDeg == null ? 0 : headingDeg)) % 360 + 360) % 360;
+  }
+
   /* ---------- progression ---------- */
   function xpForLevel(l) { return 50 * (l - 1) * l; } // L2=100, L3=300, L4=600 ...
   function levelFromXp(xp) {
@@ -612,10 +737,18 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     { id: 'cartographers-candle', name: "Cartographer's Candle", kind: 'artefact', rarity: 'uncommon', source: 'explore', blurb: 'Burns without heat and lights only the unmapped corners.' },
     { id: 'moonstone-shard', name: 'Moonstone Shard', kind: 'artefact', rarity: 'uncommon', source: 'ghost', blurb: 'Cold to the touch and slightly brighter after midnight.' },
     { id: 'rusted-gate-key', name: 'Rusted Gate Key', kind: 'artefact', rarity: 'rare', source: 'any', blurb: 'Opens nothing in this world. Fits one door in the other.' },
+    { id: 'tape-hiss-sprite', name: 'Tape Hiss Sprite', kind: 'ghost', rarity: 'common', source: 'evp', blurb: 'Lives in the gap between two words. Mostly harmless, always listening.' },
+    { id: 'static-choir', name: 'Static Choir', kind: 'ghost', rarity: 'uncommon', source: 'evp', blurb: 'Seven voices that only sing when the room goes quiet.' },
+    { id: 'whispering-reel', name: 'Whispering Reel', kind: 'artefact', rarity: 'uncommon', source: 'evp', blurb: 'A tape that plays back slightly more than was recorded.' },
+    { id: 'voice-behind-hiss', name: 'The Voice Behind the Hiss', kind: 'ghost', rarity: 'rare', source: 'evp', blurb: 'It answers questions you did not ask yet.' },
+    { id: 'cassette-of-names', name: 'Cassette of Names', kind: 'artefact', rarity: 'rare', source: 'evp', blurb: 'Every name on it belongs to someone who stood where you are standing.' },
     { id: 'first-steps', name: 'First Steps', kind: 'badge', rarity: 'common', source: 'badge', blurb: 'Complete your first exploration discovery.' },
     { id: 'night-shift', name: 'Night Shift', kind: 'badge', rarity: 'common', source: 'badge', blurb: 'Finish an investigation of at least one minute.' },
     { id: 'both-worlds', name: 'Both Worlds', kind: 'badge', rarity: 'uncommon', source: 'badge', blurb: 'Record a discovery in exploration and in ghost hunting.' },
     { id: 'collector', name: 'Collector', kind: 'badge', rarity: 'uncommon', source: 'badge', blurb: 'Hold five different ghosts or artefacts.' },
+    { id: 'voice-in-static', name: 'Voice in the Static', kind: 'badge', rarity: 'common', source: 'badge', blurb: 'Log your first EVP.' },
+    { id: 'listening-post', name: 'Listening Post', kind: 'badge', rarity: 'uncommon', source: 'badge', blurb: 'Log five EVPs.' },
+    { id: 'pathfinder', name: 'Pathfinder', kind: 'badge', rarity: 'uncommon', source: 'badge', blurb: 'Complete three exploration discoveries.' },
     { id: 'boots-on-ground', name: 'Boots on the Ground', kind: 'badge', rarity: 'rare', source: 'badge', blurb: 'Check in at a destination with a real location fix, not a demo check-in.' }
   ];
   function byId(id) { for (var i = 0; i < COLLECTIBLES.length; i++) if (COLLECTIBLES[i].id === id) return COLLECTIBLES[i]; return null; }
@@ -628,6 +761,11 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
       if (ctx.radiusM >= 1000) { w.common -= 9; w.uncommon += 6; w.rare += 3; }
       if (ctx.radiusM >= 2000) { w.common -= 2; w.rare += 1; w.legendary += 1; }
       if (ctx.demo === false) { w.rare = Math.round(w.rare * 1.5); w.legendary = Math.round(w.legendary * 1.5); }
+    } else if (source === 'evp') {
+      var sec = ctx.durationSec || 0, marks = ctx.marks || 0;
+      if (sec >= 30) { w.common -= 6; w.uncommon += 4; w.rare += 2; }
+      if (sec >= 90) { w.common -= 4; w.rare += 2; w.legendary += 2; }
+      if (marks >= 3) { w.common -= 4; w.uncommon += 2; w.rare += 2; }
     } else if (source === 'ghost') {
       var m = (ctx.sessionSec || 0) / 60;
       if (m >= 5) { w.common -= 8; w.uncommon += 5; w.rare += 3; }
@@ -662,14 +800,19 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   }
 
   /* ---------- state ---------- */
+  var MAX_CLIPS = 40, MAX_CLIP_SEC = 180, EVP_MIN_SEC = 10, EVP_DAILY_CAP = 5;
   var DEMO_ORIGIN = { lat: 52.3791, lng: 4.9003 }; // example start point for the demo radar only
+  function dailyBlank(key) { return { key: key, gen: 0, find: 0, inv: 0, evp: 0, evpClaims: 0, paid: {} }; }
+  var FIGURE_COLORS = ['ice', 'violet', 'amber', 'mint'], FIGURE_HATS = ['none', 'cap', 'top', 'hood'];
+  function validCoord(o) { return o && typeof o.lat === 'number' && typeof o.lng === 'number' && Math.abs(o.lat) <= 90 && Math.abs(o.lng) <= 180; }
   function defaultState() {
     return {
-      v: 1, xp: 0, collection: {}, discoveries: [], sessions: [], notes: [],
-      counters: { exploreGen: 0, exploreFound: 0, exploreFoundVerified: 0, ghostFound: 0, sessions: 0 },
-      settings: { radiusM: 500 },
-      quest: { status: 'idle', dest: null, origin: null, source: 'demo', radiusM: 500 },
-      daily: { key: '', gen: 0, find: 0, inv: 0, paid: {} }
+      v: 2, xp: 0, collection: {}, discoveries: [], sessions: [], notes: [], clips: [],
+      counters: { exploreGen: 0, exploreFound: 0, exploreFoundVerified: 0, ghostFound: 0, sessions: 0, evpClips: 0, evpFound: 0 },
+      settings: { radiusM: 500, figure: { color: 'ice', hat: 'cap' } },
+      origin: null,
+      quest: { status: 'idle', dest: null, radiusM: 500 },
+      daily: dailyBlank('')
     };
   }
   function normalizeState(raw) {
@@ -684,16 +827,33 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     if (raw.counters) for (k in s.counters) if (typeof raw.counters[k] === 'number') s.counters[k] = raw.counters[k];
     if (raw.settings && raw.settings.radiusM) s.settings.radiusM = clampRadius(raw.settings.radiusM);
     if (raw.settings && raw.settings.phone === true) s.settings.phone = true;
+    if (raw.settings && raw.settings.figure) {
+      var fg = raw.settings.figure;
+      if (FIGURE_COLORS.indexOf(fg.color) >= 0) s.settings.figure.color = fg.color;
+      if (FIGURE_HATS.indexOf(fg.hat) >= 0) s.settings.figure.hat = fg.hat;
+    }
+    if (validCoord(raw.origin)) s.origin = { lat: raw.origin.lat, lng: raw.origin.lng, kind: raw.origin.kind === 'gps' ? 'gps' : 'manual' };
     if (raw.quest && typeof raw.quest === 'object') {
       var q = raw.quest;
       if (['idle', 'ready', 'navigating', 'arrived', 'cancelled'].indexOf(q.status) >= 0) s.quest.status = q.status;
-      if (q.dest && typeof q.dest.lat === 'number') s.quest.dest = q.dest;
-      if (q.origin && typeof q.origin.lat === 'number') s.quest.origin = q.origin;
-      if (q.source === 'gps' || q.source === 'demo' || q.source === 'manual') s.quest.source = q.source;
+      if (validCoord(q.dest)) s.quest.dest = { lat: q.dest.lat, lng: q.dest.lng, distanceM: Number(q.dest.distanceM) || 0, bearingDeg: Number(q.dest.bearingDeg) || 0, verified: false, custom: q.dest.custom === true };
       s.quest.radiusM = clampRadius(q.radiusM || 500);
+      if (!s.quest.dest) s.quest.status = 'idle';
+    }
+    if (Array.isArray(raw.clips)) {
+      s.clips = raw.clips.filter(function (c) { return c && typeof c.id === 'string' && c.id.length < 40; }).slice(0, MAX_CLIPS).map(function (c) {
+        return {
+          id: c.id, ts: Number(c.ts) || 0, durationSec: Math.max(0, Math.round(Number(c.durationSec) || 0)),
+          marks: (Array.isArray(c.marks) ? c.marks : []).map(Number).filter(isFinite).slice(0, 50),
+          peaks: (Array.isArray(c.peaks) ? c.peaks : []).map(Number).filter(isFinite).slice(0, 160),
+          name: String(c.name || '').slice(0, 60), note: String(c.note || '').slice(0, 160),
+          rewarded: c.rewarded === true, mime: String(c.mime || '').slice(0, 40), size: Number(c.size) || 0
+        };
+      });
     }
     if (raw.daily && typeof raw.daily === 'object') {
-      s.daily = { key: String(raw.daily.key || ''), gen: raw.daily.gen | 0, find: raw.daily.find | 0, inv: raw.daily.inv | 0, paid: raw.daily.paid || {} };
+      var rd = raw.daily; s.daily = dailyBlank(String(rd.key || ''));
+      s.daily.gen = rd.gen | 0; s.daily.find = rd.find | 0; s.daily.inv = rd.inv | 0; s.daily.evp = rd.evp | 0; s.daily.evpClaims = rd.evpClaims | 0; s.daily.paid = rd.paid || {};
     }
     return s;
   }
@@ -702,7 +862,8 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   var DAILY = [
     { id: 'gen', label: 'Generate a destination', need: 1, xp: 15 },
     { id: 'find', label: 'Record a discovery', need: 1, xp: 25 },
-    { id: 'inv', label: 'Finish an investigation', need: 1, xp: 25 }
+    { id: 'inv', label: 'Finish an investigation', need: 1, xp: 25 },
+    { id: 'evp', label: 'Record an EVP of 10 seconds or more', need: 1, xp: 20 }
   ];
   function dayKey(ts) {
     var d = new Date(ts);
@@ -710,7 +871,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   }
   function rollDaily(state, now) {
     var k = dayKey(now);
-    if (state.daily.key !== k) state.daily = { key: k, gen: 0, find: 0, inv: 0, paid: {} };
+    if (state.daily.key !== k) state.daily = dailyBlank(k);
   }
   function touchDaily(state, kind, now) {
     rollDaily(state, now);
@@ -738,7 +899,10 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
       'night-shift': c.sessions >= 1,
       'both-worlds': c.exploreFound >= 1 && c.ghostFound >= 1,
       'collector': ownedCount(state) >= 5,
-      'boots-on-ground': c.exploreFoundVerified >= 1
+      'boots-on-ground': c.exploreFoundVerified >= 1,
+      'voice-in-static': c.evpFound >= 1,
+      'listening-post': c.evpFound >= 5,
+      'pathfinder': c.exploreFound >= 3
     };
   }
   function awardBadges(state) {
@@ -748,7 +912,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   }
 
   /* ---------- events ---------- */
-  var BASE_XP = { explore: 60, exploreDemo: 20, ghost: 25 };
+  var BASE_XP = { explore: 60, exploreDemo: 20, ghost: 25, evp: 30 };
   function recordGenerate(state, now) {
     var s = clone(state);
     s.counters.exploreGen++;
@@ -758,10 +922,11 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   /* find: { mode:'explore'|'ghost', item, isNew, demo, coords?, note? } */
   function recordFind(state, find, now) {
     var s = clone(state);
-    var base = find.mode === 'ghost' ? BASE_XP.ghost : (find.demo ? BASE_XP.exploreDemo : BASE_XP.explore);
+    var base = find.mode === 'ghost' ? BASE_XP.ghost : find.mode === 'evp' ? BASE_XP.evp : (find.demo ? BASE_XP.exploreDemo : BASE_XP.explore);
     var xp = Math.round((find.isNew ? base : base / 2) + (find.isNew ? RARITY_BONUS_XP[find.item.rarity] : 0));
     s.collection[find.item.id] = (s.collection[find.item.id] || 0) + 1;
     if (find.mode === 'ghost') s.counters.ghostFound++;
+    else if (find.mode === 'evp') s.counters.evpFound++;
     else { s.counters.exploreFound++; if (!find.demo) s.counters.exploreFoundVerified++; }
     s.discoveries.unshift({
       ts: now, mode: find.mode, id: find.item.id, title: find.item.name, rarity: find.item.rarity,
@@ -775,6 +940,41 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     badges.forEach(function (b) { var l = addXp(s, 20 + RARITY_BONUS_XP[b.rarity]); xp += 20 + RARITY_BONUS_XP[b.rarity]; levelUp = l || levelUp; });
     return { state: s, xpGained: xp, levelUp: levelUp, newBadges: badges };
   }
+  /* ---------- EVP clips ---------- */
+  /* meta: { id, ts, durationSec, marks[], peaks[], mime, size }. Clips shorter than 3 s are not kept. */
+  function addClip(state, meta, now) {
+    var s = clone(state);
+    var dur = Math.round(clamp(meta.durationSec, 0, MAX_CLIP_SEC));
+    if (dur < 3) return { state: s, kept: false, xpGained: 0, levelUp: null, evicted: [] };
+    var clip = { id: String(meta.id), ts: now, durationSec: dur, marks: (meta.marks || []).slice(0, 50), peaks: (meta.peaks || []).slice(0, 160), name: '', note: '', rewarded: false, mime: meta.mime || '', size: meta.size || 0 };
+    s.clips.unshift(clip);
+    var evicted = s.clips.length > MAX_CLIPS ? s.clips.splice(MAX_CLIPS).map(function (c) { return c.id; }) : [];
+    s.counters.evpClips++;
+    var xp = 0, levelUp = null;
+    if (dur >= EVP_MIN_SEC) { var d = touchDaily(s, 'evp', now); xp = d.xp; levelUp = d.levelUp; }
+    return { state: s, kept: true, xpGained: xp, levelUp: levelUp, evicted: evicted };
+  }
+  function evpCheck(state, clipId, now) {
+    var c = null;
+    state.clips.forEach(function (x) { if (x.id === clipId) c = x; });
+    if (!c) return { ok: false, reason: 'missing' };
+    if (c.rewarded) return { ok: false, reason: 'done' };
+    if (c.durationSec < EVP_MIN_SEC) return { ok: false, reason: 'short' };
+    var s = clone(state); rollDaily(s, now);
+    if (s.daily.evpClaims >= EVP_DAILY_CAP) return { ok: false, reason: 'limit' };
+    return { ok: true, clip: c };
+  }
+  /* The player says they heard something. Rewarded once per clip, up to a daily limit. */
+  function claimEvp(state, clipId, rng, now) {
+    var chk = evpCheck(state, clipId, now);
+    if (!chk.ok) return chk;
+    var roll = rollCollectible('evp', { durationSec: chk.clip.durationSec, marks: chk.clip.marks.length }, rng, state.collection);
+    var res = recordFind(state, { mode: 'evp', item: roll.item, isNew: roll.isNew, demo: false, note: clipId }, now);
+    res.state.clips.forEach(function (x) { if (x.id === clipId) x.rewarded = true; });
+    rollDaily(res.state, now); res.state.daily.evpClaims++;
+    return { ok: true, state: res.state, roll: roll, res: res };
+  }
+
   /* A session counts only if it lasted at least a minute. */
   function finishSession(state, durationSec, now) {
     var s = clone(state);
@@ -801,15 +1001,392 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     DEMO_ORIGIN: DEMO_ORIGIN, defaultState: defaultState, normalizeState: normalizeState,
     DAILY: DAILY, dayKey: dayKey, rollDaily: rollDaily, touchDaily: touchDaily,
     badgeRules: badgeRules, awardBadges: awardBadges, recordGenerate: recordGenerate, recordFind: recordFind, finishSession: finishSession,
-    shareText: shareText, clone: clone
+    shareText: shareText, clone: clone,
+    project: project, unproject: unproject, metersPerPixel: metersPerPixel, circlePoints: circlePoints, fitView: fitView,
+    heat: heat, arrowAngle: arrowAngle, addClip: addClip, evpCheck: evpCheck, claimEvp: claimEvp,
+    FIGURE_COLORS: FIGURE_COLORS, FIGURE_HATS: FIGURE_HATS, validCoord: validCoord,
+    LIMITS: { MAX_CLIPS: MAX_CLIPS, MAX_CLIP_SEC: MAX_CLIP_SEC, EVP_MIN_SEC: EVP_MIN_SEC, EVP_DAILY_CAP: EVP_DAILY_CAP }
   };
 });
 
 </script>
 <script>
+/* GhostQuest map: a small slippy map on two canvases (OpenStreetMap tiles + a glowing overlay).
+   No external library. Needs window.GQ (logic.js) for the projection maths. */
+(function (root) {
+  'use strict';
+  var G = root.GQ, TS = 256, TAU = Math.PI * 2;
+  var TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+  function create(el, opts) {
+    opts = opts || {};
+    var tileUrl = opts.tileUrl || TILE_URL;
+    el.classList.add('gqmap');
+    el.innerHTML = '<canvas class="gqm-tiles"></canvas><canvas class="gqm-over"></canvas>' +
+      '<div class="gqm-ctl"><button type="button" data-z="1" aria-label="Zoom in">+</button><button type="button" data-z="-1" aria-label="Zoom out">−</button><button type="button" data-fit="1" aria-label="Fit the whole circle">◎</button></div>' +
+      '<div class="gqm-attr"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></div>';
+    var tc = el.querySelector('.gqm-tiles'), oc = el.querySelector('.gqm-over');
+    var tctx = tc.getContext('2d'), octx = oc.getContext('2d');
+    var W = 0, H = 0, dpr = 1;
+    var view = { lat: 52.3791, lng: 4.9003, zoom: 14 };
+    var scene = {};
+    var cache = {}, order = [], active = false, raf = 0, dirtyTiles = true, picking = null;
+    var reduced = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ----- tiles ----- */
+    function tileKey(z, x, y) { return z + '/' + x + '/' + y; }
+    function getTile(z, x, y) {
+      var k = tileKey(z, x, y), e = cache[k];
+      if (e) return e;
+      e = cache[k] = { ok: false, err: false, img: new Image() };
+      e.img.decoding = 'async';
+      e.img.onload = function () { e.ok = true; dirtyTiles = true; };
+      e.img.onerror = function () { e.err = true; };
+      e.img.src = tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+      order.push(k);
+      if (order.length > 320) { var old = order.splice(0, 60); old.forEach(function (o) { delete cache[o]; }); }
+      return e;
+    }
+    function drawTiles() {
+      dirtyTiles = false;
+      tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      tctx.clearRect(0, 0, W, H);
+      var z0 = Math.max(0, Math.min(19, Math.round(view.zoom))), sc = Math.pow(2, view.zoom - z0), ts = TS * sc;
+      var c = G.project(view.lat, view.lng, z0);
+      var tlx = c.x - W / (2 * sc), tly = c.y - H / (2 * sc);
+      var n = Math.pow(2, z0);
+      var x0 = Math.floor(tlx / TS), x1 = Math.floor((tlx + W / sc) / TS), y0 = Math.floor(tly / TS), y1 = Math.floor((tly + H / sc) / TS);
+      for (var ty = y0; ty <= y1; ty++) {
+        if (ty < 0 || ty >= n) continue;
+        for (var tx = x0; tx <= x1; tx++) {
+          var wx = ((tx % n) + n) % n, dx = (tx * TS - tlx) * sc, dy = (ty * TS - tly) * sc;
+          var e = getTile(z0, wx, ty);
+          if (e.ok) { tctx.drawImage(e.img, dx, dy, ts + 0.6, ts + 0.6); continue; }
+          if (z0 > 0) { /* show the blurry parent tile while this one loads */
+            var pe = cache[tileKey(z0 - 1, wx >> 1, ty >> 1)];
+            if (pe && pe.ok) tctx.drawImage(pe.img, (wx & 1) * 128, (ty & 1) * 128, 128, 128, dx, dy, ts + 0.6, ts + 0.6);
+          }
+        }
+      }
+    }
+
+    /* ----- view maths ----- */
+    function toScreen(lat, lng) {
+      var c = G.project(view.lat, view.lng, view.zoom), p = G.project(lat, lng, view.zoom);
+      return { x: W / 2 + (p.x - c.x), y: H / 2 + (p.y - c.y) };
+    }
+    function toLatLng(sx, sy) {
+      var c = G.project(view.lat, view.lng, view.zoom);
+      return G.unproject(c.x + (sx - W / 2), c.y + (sy - H / 2), view.zoom);
+    }
+    function clampZoom(z) { return Math.max(2, Math.min(19, z)); }
+    function panBy(dx, dy) {
+      var c = G.project(view.lat, view.lng, view.zoom), n = G.unproject(c.x - dx, c.y - dy, view.zoom);
+      view.lat = Math.max(-85, Math.min(85, n.lat)); view.lng = n.lng; dirtyTiles = true;
+    }
+    function zoomAt(z, sx, sy) {
+      z = clampZoom(z);
+      var before = toLatLng(sx, sy); view.zoom = z;
+      var pb = G.project(before.lat, before.lng, z), nc = G.unproject(pb.x - (sx - W / 2), pb.y - (sy - H / 2), z);
+      view.lat = Math.max(-85, Math.min(85, nc.lat)); view.lng = nc.lng; dirtyTiles = true;
+    }
+
+    /* ----- overlay ----- */
+    function glowDot(x, y, r, col, blur) { octx.shadowColor = col; octx.shadowBlur = blur || 14; octx.fillStyle = col; octx.beginPath(); octx.arc(x, y, r, 0, TAU); octx.fill(); octx.shadowBlur = 0; }
+    function drawOverlay(t) {
+      octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      octx.clearRect(0, 0, W, H);
+      var o = scene.origin, d = scene.dest, me = scene.me, mpp = G.metersPerPixel(view.lat, view.zoom);
+      var pulse = reduced ? 0.5 : (Math.sin(t / 500) + 1) / 2;
+      if (o && scene.radiusM) {
+        var op = toScreen(o.lat, o.lng), rp = scene.radiusM / mpp;
+        var g = octx.createRadialGradient(op.x, op.y, rp * 0.2, op.x, op.y, rp);
+        g.addColorStop(0, 'rgba(71,211,255,0.03)'); g.addColorStop(1, 'rgba(71,211,255,0.14)');
+        octx.fillStyle = g; octx.beginPath(); octx.arc(op.x, op.y, rp, 0, TAU); octx.fill();
+        octx.strokeStyle = 'rgba(120,225,255,0.95)'; octx.lineWidth = 2; octx.setLineDash([7, 7]); octx.shadowColor = '#47d3ff'; octx.shadowBlur = 10;
+        octx.beginPath(); octx.arc(op.x, op.y, rp, 0, TAU); octx.stroke(); octx.setLineDash([]); octx.shadowBlur = 0;
+        if (rp > 40 && rp < W * 2) { /* distance label on the ring */
+          var lab = G.formatDistance(scene.radiusM), lx = op.x, ly = op.y - rp;
+          if (ly > 12 && ly < H - 8 && lx > 30 && lx < W - 30) {
+            octx.font = '12px "Share Tech Mono", monospace'; octx.textAlign = 'center';
+            var tw = octx.measureText(lab).width + 12;
+            octx.fillStyle = 'rgba(4,8,22,.85)'; octx.fillRect(lx - tw / 2, ly - 9, tw, 18);
+            octx.fillStyle = '#bfeaff'; octx.fillText(lab, lx, ly + 4);
+          }
+        }
+        octx.strokeStyle = 'rgba(71,211,255,' + (0.5 - pulse * 0.4) + ')'; octx.lineWidth = 2;
+        octx.beginPath(); octx.arc(op.x, op.y, 9 + pulse * 12, 0, TAU); octx.stroke();
+        glowDot(op.x, op.y, 6, '#47d3ff', 14); octx.strokeStyle = '#fff'; octx.lineWidth = 2; octx.beginPath(); octx.arc(op.x, op.y, 6, 0, TAU); octx.stroke();
+      }
+      if (d) {
+        var dp = toScreen(d.lat, d.lng), col = scene.status === 'arrived' ? '#6be3b0' : scene.status === 'cancelled' ? '#8fa6c4' : '#9677ff';
+        if (o) {
+          var op2 = toScreen(o.lat, o.lng);
+          octx.strokeStyle = 'rgba(150,119,255,.7)'; octx.lineWidth = 2; octx.setLineDash([3, 8]);
+          octx.beginPath(); octx.moveTo(op2.x, op2.y); octx.lineTo(dp.x, dp.y); octx.stroke(); octx.setLineDash([]);
+        }
+        var heat = scene.heat || 0;
+        for (var i = 0; i < 2; i++) { /* haunt aura: pulses faster and wider as you get closer */
+          var ph = reduced ? 0.4 : ((t / (1400 - heat * 160)) + i * 0.5) % 1;
+          octx.strokeStyle = col; octx.globalAlpha = (1 - ph) * 0.7; octx.lineWidth = 2;
+          octx.beginPath(); octx.arc(dp.x, dp.y, 10 + ph * (22 + heat * 6), 0, TAU); octx.stroke(); octx.globalAlpha = 1;
+        }
+        octx.save(); octx.translate(dp.x, dp.y); octx.shadowColor = col; octx.shadowBlur = 18; octx.fillStyle = col;
+        octx.beginPath(); octx.moveTo(0, -13); octx.lineTo(10, 0); octx.lineTo(0, 13); octx.lineTo(-10, 0); octx.closePath(); octx.fill();
+        octx.shadowBlur = 0; octx.strokeStyle = '#fff'; octx.lineWidth = 2; octx.stroke();
+        octx.fillStyle = '#fff'; octx.beginPath(); octx.arc(0, 0, 2.4, 0, TAU); octx.fill(); octx.restore();
+      }
+      if (me) {
+        var mp = toScreen(me.lat, me.lng), ar = (me.accuracyM || 0) / mpp;
+        if (ar > 8) { octx.fillStyle = 'rgba(255,255,255,.10)'; octx.strokeStyle = 'rgba(255,255,255,.35)'; octx.lineWidth = 1; octx.beginPath(); octx.arc(mp.x, mp.y, Math.min(ar, 160), 0, TAU); octx.fill(); octx.stroke(); }
+        if (me.heading != null) {
+          var a = (me.heading - 90) * Math.PI / 180;
+          var cg = octx.createRadialGradient(mp.x, mp.y, 2, mp.x, mp.y, 46); cg.addColorStop(0, 'rgba(255,255,255,.5)'); cg.addColorStop(1, 'rgba(255,255,255,0)');
+          octx.fillStyle = cg; octx.beginPath(); octx.moveTo(mp.x, mp.y); octx.arc(mp.x, mp.y, 46, a - 0.5, a + 0.5); octx.closePath(); octx.fill();
+        }
+        glowDot(mp.x, mp.y, 7, '#ffffff', 16); octx.fillStyle = '#2a8cff'; octx.beginPath(); octx.arc(mp.x, mp.y, 4.2, 0, TAU); octx.fill();
+      }
+    }
+
+    function frame(t) {
+      raf = 0; if (!active) return;
+      if (dirtyTiles) drawTiles();
+      drawOverlay(t);
+      raf = root.requestAnimationFrame(frame);
+    }
+    function start() { if (!raf && active) raf = root.requestAnimationFrame(frame); }
+
+    function resize() {
+      var r = el.getBoundingClientRect(); if (!r.width || !r.height) return false;
+      dpr = Math.min(2, root.devicePixelRatio || 1);
+      if (Math.abs(r.width - W) < 0.5 && Math.abs(r.height - H) < 0.5) return true;
+      W = r.width; H = r.height;
+      [tc, oc].forEach(function (c) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); c.style.width = W + 'px'; c.style.height = H + 'px'; });
+      dirtyTiles = true; return true;
+    }
+
+    /* ----- gestures ----- */
+    var ptrs = {}, g0 = null;
+    function pts() { return Object.keys(ptrs).map(function (k) { return ptrs[k]; }); }
+    function local(e) { var r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+    el.addEventListener('pointerdown', function (e) {
+      if (e.target.closest('.gqm-ctl, .gqm-attr, .gqm-bar')) return;
+      var p = local(e); ptrs[e.pointerId] = { x: p.x, y: p.y, sx: p.x, sy: p.y, t: Date.now() };
+      try { el.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ }
+      var a = pts(); g0 = { n: a.length, dist: a.length > 1 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0, zoom: view.zoom, moved: 0 };
+    });
+    el.addEventListener('pointermove', function (e) {
+      var p = ptrs[e.pointerId]; if (!p) return;
+      var n = local(e), dx = n.x - p.x, dy = n.y - p.y; p.x = n.x; p.y = n.y;
+      var a = pts();
+      if (a.length === 1) { g0.moved += Math.abs(dx) + Math.abs(dy); panBy(dx, dy); }
+      else if (a.length >= 2) {
+        var d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y), mx = (a[0].x + a[1].x) / 2, my = (a[0].y + a[1].y) / 2;
+        g0.moved += 99; if (g0.dist > 0) zoomAt(g0.zoom + Math.log(d / g0.dist) / Math.LN2, mx, my);
+      }
+    });
+    function up(e) {
+      var p = ptrs[e.pointerId]; if (!p) return;
+      var tap = g0 && g0.n === 1 && g0.moved < 8 && Date.now() - p.t < 600;
+      delete ptrs[e.pointerId];
+      if (tap && opts.onTap) { var ll = toLatLng(p.x, p.y); opts.onTap({ lat: ll.lat, lng: ll.lng }, picking); }
+      var a = pts(); g0 = a.length ? { n: a.length, dist: a.length > 1 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0, zoom: view.zoom, moved: 99 } : null;
+    }
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    el.addEventListener('wheel', function (e) { e.preventDefault(); var p = local(e); zoomAt(view.zoom - e.deltaY * 0.0016, p.x, p.y); }, { passive: false });
+    el.querySelector('.gqm-ctl').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.z) zoomAt(view.zoom + Number(b.dataset.z), W / 2, H / 2);
+      else if (b.dataset.fit && opts.onFit) opts.onFit();
+    });
+
+    var api = {
+      setActive: function (on) { active = !!on; if (on) { resize(); dirtyTiles = true; start(); } },
+      resize: function () { if (resize()) { dirtyTiles = true; return true; } return false; },
+      setScene: function (s) { scene = s || {}; },
+      setPicking: function (mode) { picking = mode || null; el.classList.toggle('picking', !!picking); },
+      getPicking: function () { return picking; },
+      setView: function (lat, lng, zoom) { view.lat = lat; view.lng = lng; view.zoom = clampZoom(zoom); dirtyTiles = true; },
+      fit: function (points, pad) { resize(); var v = G.fitView(points, W || 300, H || 300, pad == null ? 22 : pad, 18); api.setView(v.lat, v.lng, v.zoom); },
+      getView: function () { return { lat: view.lat, lng: view.lng, zoom: view.zoom }; },
+      toScreen: toScreen, toLatLng: toLatLng
+    };
+    return api;
+  }
+  root.GQMap = { create: create };
+})(typeof self !== 'undefined' ? self : this);
+
+/* GhostQuest audio: EVP recorder (microphone -> IndexedDB), enhance playback, and spirit-box static.
+   Everything stays on the device. */
+(function (root) {
+  'use strict';
+  var DB_NAME = 'ghostquest-audio', STORE = 'clips';
+
+  /* ----- clip storage (IndexedDB) ----- */
+  function db() {
+    return new Promise(function (res, rej) {
+      try {
+        var rq = root.indexedDB.open(DB_NAME, 1);
+        rq.onupgradeneeded = function () { rq.result.createObjectStore(STORE); };
+        rq.onsuccess = function () { res(rq.result); };
+        rq.onerror = function () { rej(rq.error); };
+      } catch (e) { rej(e); }
+    });
+  }
+  function tx(mode, fn) {
+    return db().then(function (d) {
+      return new Promise(function (res, rej) {
+        var t = d.transaction(STORE, mode), out = fn(t.objectStore(STORE));
+        t.oncomplete = function () { res(out && 'result' in out ? out.result : undefined); d.close(); };
+        t.onerror = function () { rej(t.error); d.close(); };
+        t.onabort = function () { rej(t.error || new Error('aborted')); d.close(); };
+      });
+    });
+  }
+  var store = {
+    put: function (id, blob) { return tx('readwrite', function (s) { return s.put(blob, id); }); },
+    get: function (id) { return tx('readonly', function (s) { return s.get(id); }); },
+    del: function (id) { return tx('readwrite', function (s) { return s.delete(id); }); },
+    clear: function () { return tx('readwrite', function (s) { return s.clear(); }); }
+  };
+
+  function pickMime() {
+    var list = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+    if (!root.MediaRecorder || !root.MediaRecorder.isTypeSupported) return '';
+    for (var i = 0; i < list.length; i++) { try { if (root.MediaRecorder.isTypeSupported(list[i])) return list[i]; } catch (e) { /* next */ } }
+    return '';
+  }
+  function supported() { return !!(root.navigator && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && root.MediaRecorder); }
+  function ctx() { var AC = root.AudioContext || root.webkitAudioContext; return AC ? new AC() : null; }
+
+  /* ----- recorder ----- */
+  /* start({maxSec, onLevel(level0to1, peaks), onTick(sec), onAutoStop()}) -> Promise<recorder>
+     recorder.mark() adds a moment; recorder.stop() -> Promise<{blob, mime, durationSec, marks, peaks}> */
+  function startRecording(o) {
+    o = o || {};
+    if (!supported()) return Promise.reject(new Error('unsupported'));
+    return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }).then(function (stream) {
+      var mime = pickMime(), rec;
+      try { rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); } catch (e) { stream.getTracks().forEach(function (t) { t.stop(); }); throw e; }
+      var chunks = [], marks = [], samples = [], t0 = Date.now(), stopped = false, timer = 0, raf = 0, ac = ctx(), an = null, buf = null;
+      if (ac) {
+        try { var src = ac.createMediaStreamSource(stream); an = ac.createAnalyser(); an.fftSize = 1024; src.connect(an); buf = new Uint8Array(an.fftSize); if (ac.state === 'suspended') ac.resume(); } catch (e) { an = null; }
+      }
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+      var lastSample = 0;
+      function level(now) {
+        raf = root.requestAnimationFrame(level);
+        if (!an) return;
+        an.getByteTimeDomainData(buf);
+        var peak = 0, i, v; for (i = 0; i < buf.length; i++) { v = Math.abs(buf[i] - 128) / 128; if (v > peak) peak = v; }
+        if (now - lastSample > 100) { samples.push(peak); lastSample = now; }
+        if (o.onLevel) o.onLevel(peak, buf);
+      }
+      raf = root.requestAnimationFrame(level);
+      timer = root.setInterval(function () {
+        var sec = (Date.now() - t0) / 1000;
+        if (o.onTick) o.onTick(sec);
+        if (o.maxSec && sec >= o.maxSec && !stopped) { if (o.onAutoStop) o.onAutoStop(); }
+      }, 250);
+      rec.start(1000);
+      function finish() {
+        return new Promise(function (resolve) {
+          rec.onstop = function () {
+            root.clearInterval(timer); root.cancelAnimationFrame(raf);
+            stream.getTracks().forEach(function (t) { t.stop(); });
+            if (ac) { try { ac.close(); } catch (e) { /* ignore */ } }
+            var dur = (Date.now() - t0) / 1000, type = rec.mimeType || mime || 'audio/webm';
+            var n = 120, peaks = [], per = Math.max(1, samples.length / n), i, j;
+            for (i = 0; i < Math.min(n, samples.length); i++) { var mx = 0; for (j = Math.floor(i * per); j < Math.floor((i + 1) * per) && j < samples.length; j++) mx = Math.max(mx, samples[j]); peaks.push(Math.round(mx * 100) / 100); }
+            resolve({ blob: new Blob(chunks, { type: type }), mime: type, durationSec: Math.round(dur * 10) / 10, marks: marks, peaks: peaks });
+          };
+          try { rec.stop(); } catch (e) { rec.onstop(); }
+        });
+      }
+      return {
+        mark: function () { var s = Math.round((Date.now() - t0) / 100) / 10; marks.push(s); return s; },
+        stop: function () { if (stopped) return Promise.resolve(null); stopped = true; return finish(); },
+        elapsed: function () { return (Date.now() - t0) / 1000; }
+      };
+    });
+  }
+
+  /* ----- playback with optional "enhance" (gain + voice band filter) ----- */
+  var player = { el: null, url: '', ac: null, gain: null, hp: null, lp: null, comp: null, wired: false };
+  function ensureChain() {
+    if (player.ac) return;
+    player.ac = ctx(); if (!player.ac) return;
+    var a = player.ac;
+    player.hp = a.createBiquadFilter(); player.hp.type = 'highpass';
+    player.lp = a.createBiquadFilter(); player.lp.type = 'lowpass';
+    player.comp = a.createDynamicsCompressor(); player.gain = a.createGain();
+    player.hp.connect(player.lp); player.lp.connect(player.comp); player.comp.connect(player.gain); player.gain.connect(a.destination);
+    setEnhance(false);
+  }
+  function setEnhance(on) {
+    if (!player.ac) { player.wantEnhance = !!on; return; }
+    player.wantEnhance = !!on;
+    player.hp.frequency.value = on ? 280 : 10; player.lp.frequency.value = on ? 3600 : 20000;
+    player.gain.gain.value = on ? 5 : 1;
+  }
+  function stopPlayback() {
+    if (player.el) { try { player.el.pause(); } catch (e) { /* ignore */ } }
+    if (player.url) { try { root.URL.revokeObjectURL(player.url); } catch (e) { /* ignore */ } player.url = ''; }
+    player.el = null;
+  }
+  /* play(blob, {enhance, onTime(sec), onEnd()}) */
+  function play(blob, o) {
+    o = o || {}; stopPlayback();
+    var el = new Audio(); player.el = el; player.url = root.URL.createObjectURL(blob);
+    el.src = player.url; el.preload = 'auto';
+    ensureChain();
+    if (player.ac) {
+      try { var s = player.ac.createMediaElementSource(el); s.connect(player.hp); } catch (e) { /* falls back to plain playback */ }
+      if (player.ac.state === 'suspended') player.ac.resume();
+    }
+    setEnhance(!!o.enhance);
+    el.ontimeupdate = function () { if (o.onTime) o.onTime(el.currentTime); };
+    el.onended = function () { if (o.onEnd) o.onEnd(); };
+    el.onerror = function () { if (o.onError) o.onError(); };
+    return el.play().then(function () { return el; });
+  }
+
+  /* ----- spirit box: a fast radio scan made from filtered noise ----- */
+  var box = null;
+  function boxStart() {
+    if (box) return true;
+    var a = ctx(); if (!a) return false;
+    var len = a.sampleRate * 2, nb = a.createBuffer(1, len, a.sampleRate), d = nb.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var src = a.createBufferSource(); src.buffer = nb; src.loop = true;
+    var bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 3.5;
+    var g = a.createGain(); g.gain.value = 0.0001;
+    src.connect(bp); bp.connect(g); g.connect(a.destination); src.start();
+    var timer = root.setInterval(function () {
+      var now = a.currentTime;
+      bp.frequency.setValueAtTime(300 + Math.random() * 2800, now);
+      g.gain.setTargetAtTime(Math.random() < 0.2 ? 0.02 : 0.055 + Math.random() * 0.05, now, 0.01);
+    }, 90);
+    box = { a: a, g: g, timer: timer, src: src };
+    if (a.state === 'suspended') a.resume();
+    return true;
+  }
+  function boxBurst() { if (!box) return; var n = box.a.currentTime; box.g.gain.cancelScheduledValues(n); box.g.gain.setTargetAtTime(0.0001, n, 0.02); }
+  function boxStop() {
+    if (!box) return;
+    root.clearInterval(box.timer); try { box.src.stop(); box.a.close(); } catch (e) { /* ignore */ }
+    box = null;
+  }
+
+  root.GQAudio = { supported: supported, store: store, startRecording: startRecording, play: play, stopPlayback: stopPlayback, setEnhance: setEnhance, boxStart: boxStart, boxStop: boxStop, boxBurst: boxBurst, isBoxOn: function () { return !!box; } };
+})(typeof self !== 'undefined' ? self : this);
+
+
+</script>
+<script>
 (function () {
   'use strict';
-  var G = window.GQ;
+  var G = window.GQ, A = window.GQAudio;
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -819,19 +1396,15 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   var HOT = { explore: { x: .03, y: .515, w: .28, h: .30 }, ghost: { x: .595, y: .485, w: .21, h: .33 } };
   var worldAspect = 1100 / 1652;
 
-  /* ---------- storage (localStorage, with memory fallback) ---------- */
-  var KEY = 'ghostquest.v1', mem = null, storeOk = true;
+  /* ---------- storage ---------- */
+  var KEY = 'ghostquest.v1', OKKEY = 'ghostquest.ok', mem = null, storeOk = true;
   function load() {
     try { var raw = localStorage.getItem(KEY) || localStorage.getItem('gostquest.v1'); return G.normalizeState(raw ? JSON.parse(raw) : null); }
     catch (e) { storeOk = false; return G.normalizeState(mem); }
   }
-  function save() {
-    mem = S;
-    try { localStorage.setItem(KEY, JSON.stringify(S)); storeOk = true; } catch (e) { storeOk = false; }
-  }
+  function save() { mem = S; try { localStorage.setItem(KEY, JSON.stringify(S)); storeOk = true; } catch (e) { storeOk = false; } }
   var S = load();
 
-  /* artwork overrides in IndexedDB */
   var DB = 'ghostquest-art';
   function idb(mode, fn) {
     return new Promise(function (res, rej) {
@@ -853,23 +1426,24 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
 
   /* ---------- helpers ---------- */
   var toastT;
-  function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 2600); }
+  function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 3000); }
   function rar(r) { return 'r-' + r; }
   function icon(kind) { return '<svg class="i"><use href="#i-' + (kind === 'ghost' ? 'ghost' : kind === 'artefact' ? 'diamond' : 'star') + '"/></svg>'; }
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function fmt(sec) { sec = Math.max(0, Math.floor(sec)); return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0'); }
+  function tstr(ts) { return new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
 
   /* ---------- world layout ---------- */
   function layout() {
     var st = $('#stage'), vw = st.clientWidth, vh = st.clientHeight, w = $('#world');
     if (!vw || !vh) return;
-    var A = worldAspect, W, H, X, Y, cl = function (v, lo, hi) { return Math.min(hi, Math.max(lo, v)); };
-    if (vw / vh > 0.85) { H = vh; W = H * A; X = (vw - W) / 2; Y = 0; }
+    var Aa = worldAspect, W, H, X, Y, cl = function (v, lo, hi) { return Math.min(hi, Math.max(lo, v)); };
+    if (vw / vh > 0.85) { H = vh; W = H * Aa; X = (vw - W) / 2; Y = 0; }
     else {
-      if (vw / vh > A) { W = vw; H = W / A; } else { H = vh; W = H * A; }
+      if (vw / vh > Aa) { W = vw; H = W / Aa; } else { H = vh; W = H * Aa; }
       X = cl(vw / 2 - 0.4175 * W, vw - W, 0); Y = cl(vh / 2 - 0.58 * H, vh - H, 0);
     }
     w.style.cssText = 'left:' + X + 'px;top:' + Y + 'px;width:' + W + 'px;height:' + H + 'px';
-    /* keep the ghost's eyes (about 20% down the artwork) clear of the name */
     var wm = $('#wordmark'), hud = $('.hud'), topEdge = 12 + hud.offsetHeight + 14;
     var ratio = wm.naturalWidth ? wm.naturalWidth / wm.naturalHeight : 900 / 152;
     var maxH = Math.max(44, Y + 0.165 * H - topEdge - 6);
@@ -879,7 +1453,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
       b.style.cssText = 'left:' + h.x * 100 + '%;top:' + h.y * 100 + '%;width:' + h.w * 100 + '%;height:' + h.h * 100 + '%';
     });
   }
-  window.addEventListener('resize', function () { layout(); drawRadar(); });
+  window.addEventListener('resize', function () { layout(); if (gmap) gmap.resize(); });
 
   /* ---------- artwork ---------- */
   function setWorld(src) {
@@ -891,9 +1465,8 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   function applyArt(o) {
     setWorld(o.world || ART.world);
     $('#wordmark').src = o.wordmark || ART.wordmark;
-    var lg = o.logo || ART.logo;
     $('#avatar').src = o.logo || ART.icon;
-    $('#splash-logo').src = lg;
+    $('#splash-logo').src = o.logo || ART.logo;
   }
   function loadArt() {
     var o = {};
@@ -909,7 +1482,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
         im.onerror = function () { rej(new Error('Not an image')); };
         im.onload = function () {
           var sx = 0, sw = im.naturalWidth, sh = im.naturalHeight;
-          if (cropBars) { /* trim black bars at the left and right edges */
+          if (cropBars) {
             var p = document.createElement('canvas'); p.width = im.naturalWidth; p.height = 40;
             var pc = p.getContext('2d'); pc.drawImage(im, 0, 0, p.width, 40);
             var d = pc.getImageData(0, 0, p.width, 40).data, lum = function (x) { var s = 0; for (var y = 0; y < 40; y++) { var i = (y * p.width + x) * 4; s += Math.max(d[i], d[i + 1], d[i + 2]); } return s / 40; };
@@ -930,7 +1503,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   function bindArt(inputId, key, maxDim, crop) {
     $(inputId).addEventListener('change', function (e) {
       var f = e.target.files && e.target.files[0]; if (!f) return;
-      fileToData(f, maxDim, crop).then(function (data) { return artSet(key, data).then(function () { return data; }); })
+      fileToData(f, maxDim, crop).then(function (data) { return artSet(key, data); })
         .then(function () { $('#art-msg').textContent = 'Saved on this device.'; loadArt(); })
         .catch(function () { $('#art-msg').textContent = 'That image could not be used or saved. Try a smaller picture.'; });
     });
@@ -953,28 +1526,36 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     n.classList.toggle('off', !on); $('span', n).textContent = on ? 'Online' : 'Offline';
   }
   window.addEventListener('online', function () { netUpdate(); toast('Back online.'); });
-  window.addEventListener('offline', function () { netUpdate(); toast('Offline. Your progress is saved on this device.'); });
+  window.addEventListener('offline', function () { netUpdate(); toast('Offline. Everything is saved on this device. Map tiles you have not visited will not load.'); });
 
   /* ---------- navigation ---------- */
   var current = 'home', busy = false;
   function showPanel(name) {
+    leavePanel(current, name);
     $$('.panel').forEach(function (p) { p.classList.remove('open'); });
     var p = $('#p-' + name);
     p.classList.add('show');
     requestAnimationFrame(function () { requestAnimationFrame(function () { p.classList.add('open'); }); });
     $$('.panel').forEach(function (q) { if (q !== p) setTimeout(function () { if (!q.classList.contains('open')) q.classList.remove('show'); }, 420); });
-    current = name; p.querySelector('.pscroll').scrollTop = 0;
-    if (name === 'explore') { renderExplore(); startRadar(); setTimeout(function () { if (map && current === 'explore') drawMap(true); }, 450); } else stopRadar();
+    current = name; var psc = p.querySelector('.pscroll'); if (psc) psc.scrollTop = 0; $('#app').classList.add('in-panel');
+    if (name === 'explore') enterExplore();
     if (name === 'ghost') renderGhost();
+    if (name === 'sls') startSls();
     if (name === 'collection') renderCollection();
     if (name === 'settings') renderSettings();
-    if (name !== 'ghost') ghostPause();
+    animUpdate();
+  }
+  function leavePanel(from, to) {
+    if (from === 'sls' && to !== 'sls') stopSls();
+    if (from === 'explore' && to !== 'explore') { stopWatch(); if (gmap) gmap.setActive(false); }
+    if (from === 'ghost' && to !== 'ghost') { ghostPause(); if (rec) stopRecording(); stopPlay(); A.boxStop(); boxOn = false; sensorsOff(); $('#btn-box').textContent = 'Spirit box'; $('#btn-box').setAttribute('aria-pressed', 'false'); }
   }
   function goHome() {
     if (current === 'home') return;
     var was = current;
+    leavePanel(was, 'home');
     $$('.panel').forEach(function (p) { p.classList.remove('open'); setTimeout(function () { if (!p.classList.contains('open')) p.classList.remove('show'); }, 420); });
-    current = 'home'; stopRadar(); ghostPause();
+    current = 'home'; $('#app').classList.remove('in-panel'); animUpdate();
     var hb = $('.hot[data-go="' + (was === 'ghost' ? 'ghost' : 'explore') + '"]'); if (hb && !reduced) { hb.classList.add('press'); setTimeout(function () { hb.classList.remove('press'); }, 900); }
   }
   function enter(kind, btn) {
@@ -998,257 +1579,660 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-go],[data-open],[data-home]'); if (!t) return;
     if (t.hasAttribute('data-go')) enter(t.dataset.go, t);
-    else if (t.hasAttribute('data-open')) { if (current === 'home') showPanel(t.dataset.open); else showPanel(t.dataset.open); }
+    else if (t.hasAttribute('data-open')) showPanel(t.dataset.open);
     else if (t.hasAttribute('data-home')) goHome();
   });
   document.addEventListener('pointerdown', function (e) { var h = e.target.closest('.hot'); if (h) h.classList.add('press'); });
   document.addEventListener('pointerup', function () { setTimeout(function () { $$('.hot.press').forEach(function (h) { if (!busy) h.classList.remove('press'); }); }, 250); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if ($('#modal').classList.contains('show')) closeModal(); else goHome(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var m = $('#modal'); if (m.classList.contains('show')) { if (!m.dataset.lock) closeModal(); } else goHome(); } });
 
-  /* ---------- EXPLORE ---------- */
-  var geo = null; /* last real position: {lat,lng,accuracyM} */
-  var STATUS = { idle: 'Idle', ready: 'Destination ready', navigating: 'On the way', arrived: 'Arrived', cancelled: 'Cancelled' };
-  var sessionOrigin = null; /* precise device location, memory only */
-  function originKind() { return (sessionOrigin && S.quest.source !== 'demo') ? S.quest.source : 'demo'; }
-  function origin() { return originKind() === 'demo' ? G.DEMO_ORIGIN : sessionOrigin; }
-  function renderExplore() {
-    var q = S.quest, st = $('#qstatus'); st.textContent = STATUS[q.status]; st.dataset.s = q.status;
-    var ok = originKind();
-    $('#origin-text').textContent = ok === 'gps'
-      ? 'Using your device location (accuracy about ' + Math.round(geo && geo.accuracyM || 0) + ' m).'
-      : ok === 'manual' ? 'Using the coordinates you entered: ' + G.formatCoord(sessionOrigin) + '.'
-      : 'Using a demo start point (Amsterdam city centre, an example). Use your location, or type a start point below.';
-    $('#rad').value = S.settings.radiusM; $('#rad-num').value = S.settings.radiusM; $('#rad-out').textContent = G.formatDistance(S.settings.radiusM) + ' (about ' + G.walkMinutes(S.settings.radiusM) + ' min walk)';
-    $$('#rad-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(+c.dataset.r === S.settings.radiusM)); });
-    var d = q.dest, card = $('#dest-card');
-    card.hidden = !d || q.status === 'idle';
-    if (d && q.status !== 'idle') {
-      $('#d-coord').textContent = G.formatCoord(d);
-      $('#d-dist').textContent = G.formatDistance(d.distanceM) + ' (about ' + G.walkMinutes(d.distanceM) + ' min walk)';
-      $('#d-dir').textContent = G.compassLabel(d.bearingDeg) + ' ' + Math.round(d.bearingDeg) + '°';
-      $('#a-osm').href = G.osmUrl(d); $('#a-apple').href = G.appleMapsUrl(d); $('#a-mapsme').href = G.mapsmeUrl(d); $('#a-om').href = G.omapsUrl(d);
-      var live = q.status === 'ready' || q.status === 'navigating';
-      $('#btn-checkin').disabled = !live; $('#btn-cancel').disabled = !live;
-      $('#btn-checkin').textContent = q.source === 'gps' ? 'Check in here' : 'Check in (demo)';
-    }
-    var f = S.discoveries.filter(function (x) { return x.mode === 'explore'; }).slice(0, 3);
-    $('#ex-finds').innerHTML = f.length ? f.map(function (x) { return '<div class="hrow"><strong>' + esc(x.title) + '</strong><span class="tagm ' + rar(x.rarity) + '" style="color:var(--rc)">' + x.rarity + '</span>' + (x.demo ? '<span class="tagm demo">Demo</span>' : '') + '</div>'; }).join('') : '<span class="muted">Nothing found yet. Generate a destination to begin.</span>';
-    ensureMap(); if (map) drawMap(true); else drawRadar();
+  /* ---------- animation loop (only while a canvas is visible) ---------- */
+  var raf = 0, t0 = performance.now();
+  var F = { sizeCanvas: function (cv) { var r = cv.getBoundingClientRect(); if (!r.width) return null; var dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.round(r.width * dpr), h = Math.round(r.height * dpr); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); return { c: c, w: r.width, h: r.height }; } };
+  function animUpdate() {
+    var want = (current === 'explore' && S.quest.status === 'navigating') || current === 'ghost';
+    if (want && !raf) raf = requestAnimationFrame(frame);
+    if (!want && raf) { cancelAnimationFrame(raf); raf = 0; }
   }
-  $('#rad').addEventListener('input', function (e) {
-    S.settings.radiusM = G.clampRadius(e.target.value); save(); $('#rad-num').value = S.settings.radiusM;
+  function frame(ts) {
+    raf = requestAnimationFrame(frame);
+    var t = (ts - t0) / 1000;
+    if (current === 'explore') drawArrow();
+    else if (current === 'ghost') { readLevel(); drawEmf(); drawSb(); drawWave(); }
+  }
+
+  /* ---------- EXPLORE: state helpers ---------- */
+  var STATUS = { idle: 'Idle', ready: 'Mark set', navigating: 'Hunting', arrived: 'Arrived', cancelled: 'Cancelled' };
+  var gmap = null, geo = null, watchId = null, wake = null, compass = null, huntStart = 0, lastHeatLevel = -1, arriveTimer = 0, armed = false;
+  var tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  function origin() { return S.origin || G.DEMO_ORIGIN; }
+  function dist2dest() { return (geo && S.quest.dest) ? G.haversine(geo, S.quest.dest) : null; }
+
+  function ensureMap() {
+    if (gmap || !window.GQMap) return;
+    try {
+      gmap = GQMap.create($('#map'), {
+        tileUrl: tileUrl,
+        onTap: function (ll, mode) { if (mode === 'start') setStart(ll, 'manual'); else if (mode === 'target') setTarget(ll); },
+        onFit: function () { fitScene(); }
+      });
+    } catch (e) { gmap = null; }
+  }
+  function setPicking(mode) {
+    if (gmap) gmap.setPicking(mode);
+    $('#pick-start').setAttribute('aria-pressed', String(mode === 'start'));
+    $('#pick-target').setAttribute('aria-pressed', String(mode === 'target'));
+    if (mode) $('#loc-msg').textContent = mode === 'start' ? 'Tap the map where you will start.' : 'Tap the map to place your target.';
+  }
+  function sceneHeat() { var d = dist2dest(); return (d != null && S.quest.status === 'navigating') ? G.heat(d).level : 0; }
+  function pushScene() {
+    if (!gmap) return;
+    var q = S.quest;
+    gmap.setScene({ origin: origin(), radiusM: S.settings.radiusM, dest: q.status === 'idle' ? null : q.dest, status: q.status, me: geo, heat: sceneHeat() });
+  }
+  function fitScene() {
+    if (!gmap) return;
+    var o = origin(), pts = G.circlePoints(o, S.settings.radiusM), q = S.quest;
+    if (q.status === 'navigating' && geo && q.dest) pts = [geo, q.dest, G.destinationPoint(q.dest, 0, 60), G.destinationPoint(q.dest, 180, 60)];
+    else if (q.dest && q.status !== 'idle') pts = pts.concat([q.dest]);
+    gmap.fit(pts, 24); pushScene();
+  }
+  function setStart(ll, kind) {
+    S.origin = { lat: ll.lat, lng: ll.lng, kind: kind };
+    if (S.quest.status === 'ready' || S.quest.status === 'cancelled' || S.quest.status === 'arrived') S.quest = { status: 'idle', dest: null, radiusM: S.settings.radiusM };
+    setPicking(null); save();
+    $('#loc-msg').textContent = kind === 'gps' ? 'Start point is your location.' : 'Start point set. Choose a distance and tap Find a spot.';
+    renderExplore(true);
+  }
+  function setTarget(ll) {
+    var o = origin();
+    stopWatch();
+    S.quest = { status: 'ready', dest: { lat: ll.lat, lng: ll.lng, distanceM: G.haversine(o, ll), bearingDeg: G.bearing(o, ll), verified: false, custom: true }, radiusM: S.settings.radiusM };
+    setPicking(null); save();
+    $('#loc-msg').textContent = 'Target placed. Scout it in Organic Maps, then start the hunt.';
+    renderExplore(true); scrollToDest();
+  }
+  function scrollToDest() { setTimeout(function () { var c = $('#dest-card'); if (c && !c.hidden) c.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' }); }, 80); }
+
+  function enterExplore() {
+    ensureMap();
+    var q = S.quest;
+    if (gmap) { gmap.setActive(true); }
+    renderExplore(true);
+    if (q.status === 'navigating') startWatch();
+    setTimeout(function () { if (gmap && current === 'explore') { gmap.resize(); fitScene(); } }, 450);
+  }
+  function renderExplore(fit) {
+    var q = S.quest, st = $('#qstatus'); st.textContent = STATUS[q.status]; st.dataset.s = q.status;
+    $('#rad').value = S.settings.radiusM;
     $('#rad-out').textContent = G.formatDistance(S.settings.radiusM) + ' (about ' + G.walkMinutes(S.settings.radiusM) + ' min walk)';
     $$('#rad-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(+c.dataset.r === S.settings.radiusM)); });
-    if (map) drawMap(false); else drawRadar();
+    if (!$('#loc-msg').textContent) $('#loc-msg').textContent = S.origin ? (S.origin.kind === 'gps' ? 'Start point is your location.' : 'Start point is the spot you chose.') : 'No start point yet. Tap My location or Set start. Until then a demo start (Amsterdam) is used.';
+    var d = q.dest, show = !!d && q.status !== 'idle', hunting = q.status === 'navigating';
+    $('#dest-card').hidden = !show || hunting; $('#hunt-card').hidden = !hunting;
+    if (show) {
+      $('#d-title').textContent = d.custom ? 'Your chosen target' : 'Your mark';
+      $('#d-coord').textContent = G.formatCoord(d);
+      $('#d-dist').textContent = G.formatDistance(d.distanceM) + ' ' + G.compassLabel(d.bearingDeg) + ' (about ' + G.walkMinutes(d.distanceM) + ' min walk)';
+      $('#a-osm').href = G.osmUrl(d); $('#a-apple').href = G.appleMapsUrl(d); $('#a-mapsme').href = G.mapsmeUrl(d); $('#a-om').href = G.omapsUrl(d, 'GhostQuest target');
+      $('#btn-hunt').disabled = q.status === 'arrived';
+      $('#btn-hunt').lastChild.textContent = q.status === 'ready' ? 'Start the hunt' : 'Hunt again';
+      $('#btn-cancel').hidden = q.status !== 'ready';
+    }
+    var f = S.discoveries.filter(function (x) { return x.mode === 'explore'; }).slice(0, 3);
+    $('#ex-finds').innerHTML = f.length ? f.map(function (x) { return '<div class="hrow"><strong>' + esc(x.title) + '</strong><span class="tagm ' + rar(x.rarity) + '" style="color:var(--rc)">' + x.rarity + '</span>' + (x.demo ? '<span class="tagm demo">Demo</span>' : '') + '</div>'; }).join('') : '<span class="muted">Nothing found yet. Find a spot to begin.</span>';
+    if (hunting) updateHunt();
+    if (fit) fitScene(); else pushScene();
+    animUpdate();
+  }
+
+  $('#rad').addEventListener('input', function (e) {
+    S.settings.radiusM = G.clampRadius(e.target.value); save();
+    $('#rad-out').textContent = G.formatDistance(S.settings.radiusM) + ' (about ' + G.walkMinutes(S.settings.radiusM) + ' min walk)';
+    $$('#rad-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(+c.dataset.r === S.settings.radiusM)); });
+    pushScene();
   });
-  $('#rad').addEventListener('change', function () { if (map) drawMap(true); });
-  $('#rad-num').addEventListener('change', function (e) { S.settings.radiusM = G.clampRadius(e.target.value); save(); renderExplore(); });
-  $('#rad-chips').addEventListener('click', function (e) {
-    var c = e.target.closest('.chip'); if (!c) return;
-    S.settings.radiusM = +c.dataset.r; save(); renderExplore();
-  });
-  $('#btn-gen').addEventListener('click', function () {
-    var rM = S.settings.radiusM, d = G.randomDestination(origin(), rM);
-    S.quest = { status: 'ready', dest: d, origin: null, source: originKind(), radiusM: rM };
-    var r = G.recordGenerate(S, Date.now()); S = r.state; save(); refreshHud();
-    $('#checkin-msg').textContent = '';
-    renderExplore();
-    if (r.xpGained) toast('Daily quest done: +' + r.xpGained + ' XP');
-    setTimeout(function () { var c = $('#dest-card'); if (c && !c.hidden) c.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }, 60);
-  });
+  $('#rad').addEventListener('change', function () { fitScene(); });
+  $('#rad-chips').addEventListener('click', function (e) { var c = e.target.closest('.chip'); if (!c) return; S.settings.radiusM = +c.dataset.r; save(); renderExplore(true); });
+  $('#pick-start').addEventListener('click', function () { setPicking(gmap && gmap.getPicking() === 'start' ? null : 'start'); });
+  $('#pick-target').addEventListener('click', function () { setPicking(gmap && gmap.getPicking() === 'target' ? null : 'target'); });
+
   $('#btn-loc').addEventListener('click', function () {
     var m = $('#loc-msg');
-    if (!navigator.geolocation) { m.textContent = 'Location is not available here. Staying on the demo start point.'; return; }
+    if (!navigator.geolocation) { m.textContent = 'Location is not available here. Use Set start instead.'; return; }
     m.textContent = 'Asking your device for a location fix...';
     navigator.geolocation.getCurrentPosition(function (p) {
-      geo = { lat: p.coords.latitude, lng: p.coords.longitude, accuracyM: p.coords.accuracy };
-      S.quest.origin = { lat: geo.lat, lng: geo.lng }; S.quest.source = 'gps'; S.quest.status = 'idle'; S.quest.dest = null;
-      /* the precise position is kept in memory only and never written to storage */
-      sessionOrigin = { lat: geo.lat, lng: geo.lng };
-      S.quest.origin = null; S.quest.source = 'gps'; save();
-      m.textContent = 'Location found. Generate a destination around you.'; renderExplore();
+      geo = { lat: p.coords.latitude, lng: p.coords.longitude, accuracyM: p.coords.accuracy, heading: null };
+      setStart({ lat: geo.lat, lng: geo.lng }, 'gps');
     }, function (err) {
-      m.textContent = (err && err.code === 1 ? 'Location permission was not granted.' : 'No location fix is available here.') + ' You can keep exploring with the demo start point. Demo check-ins give a reduced reward.';
-    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+      m.textContent = (err && err.code === 1 ? 'Location permission was not granted. In Safari: Settings, Privacy, Location Services.' : 'No location fix available right now.') + ' You can still use Set start and tap the map.';
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
   });
-  $('#btn-start-coord').addEventListener('click', function () {
-    var c = G.parseCoords($('#start-in').value), m = $('#loc-msg');
-    if (!c) { m.textContent = 'That does not look like a coordinate. Try latitude, longitude, for example 52.3791, 4.9003.'; return; }
-    sessionOrigin = c; S.quest = { status: 'idle', dest: null, origin: null, source: 'manual', radiusM: S.settings.radiusM }; save();
-    m.textContent = 'Start point set. Generate a destination around it.'; renderExplore();
+  function coordIn() { var c = G.parseCoords($('#coord-in').value); if (!c) $('#loc-msg').textContent = 'That does not look like a coordinate. Try 52.3791, 4.9003.'; return c; }
+  $('#coord-start').addEventListener('click', function () { var c = coordIn(); if (c) setStart(c, 'manual'); });
+  $('#coord-target').addEventListener('click', function () { var c = coordIn(); if (c) setTarget(c); });
+
+  $('#btn-gen').addEventListener('click', function () {
+    stopWatch();
+    var rM = S.settings.radiusM, d = G.randomDestination(origin(), rM);
+    S.quest = { status: 'ready', dest: d, radiusM: rM };
+    var r = G.recordGenerate(S, Date.now()); S = r.state; save(); refreshHud();
+    setPicking(null);
+    $('#loc-msg').textContent = S.origin ? '' : 'Demo start point in use. Tap My location to search around you.';
+    renderExplore(true); scrollToDest();
+    if (r.xpGained) toast('Daily quest done: +' + r.xpGained + ' XP');
   });
   $('#btn-copy').addEventListener('click', function () { if (S.quest.dest) copyText(G.formatCoord(S.quest.dest)); });
-  $('#btn-cancel').addEventListener('click', function () {
-    S.quest.status = 'cancelled'; save(); renderExplore();
-    $('#checkin-msg').textContent = 'Quest cancelled. Nothing is lost. Head somewhere safe and generate a new destination whenever you like.';
+  $('#a-om').addEventListener('click', function () {
+    var d = S.quest.dest; if (!d) return;
+    try { navigator.clipboard.writeText(G.formatCoord(d)); } catch (e) { /* ignore */ }
+    setTimeout(function () { if (document.visibilityState === 'visible') toast('If Organic Maps did not open, the coordinates are copied. Paste them into its search bar.'); }, 1500);
   });
-  ['#a-osm', '#a-apple'].forEach(function (id) {
-    $(id).addEventListener('click', function () { if (S.quest.status === 'ready') { S.quest.status = 'navigating'; save(); renderExplore(); } });
-  });
+  $('#a-mapsme').addEventListener('click', function () { var d = S.quest.dest; if (d) { try { navigator.clipboard.writeText(G.formatCoord(d)); } catch (e) { /* ignore */ } } });
+  $('#btn-cancel').addEventListener('click', cancelQuest);
+  $('#h-stop').addEventListener('click', cancelQuest);
+  function cancelQuest() {
+    stopWatch(); S.quest.status = 'cancelled'; save(); renderExplore(true);
+    toast('Quest cancelled. Nothing is lost. Stay safe.');
+  }
 
-  $('#btn-checkin').addEventListener('click', function () {
-    var q = S.quest, m = $('#checkin-msg'); if (!q.dest) return;
-    function demoCheckin(reason) {
-      m.innerHTML = esc(reason) + ' <button class="btn" id="btn-demo-ci" style="margin-top:8px">Demo check-in (reduced reward)</button>';
-      $('#btn-demo-ci').addEventListener('click', function () { complete(true); });
-    }
-    function complete(demo) {
-      var ctx = { radiusM: q.radiusM, demo: demo };
-      var roll = G.rollCollectible('explore', ctx, Math.random, S.collection);
-      var res = G.recordFind(S, { mode: 'explore', item: roll.item, isNew: roll.isNew, demo: demo, coords: G.roundCoarse(q.dest) }, Date.now());
-      S = res.state; S.quest.status = 'arrived'; save(); refreshHud(); m.textContent = ''; renderExplore(); reveal(res, roll, demo ? 'Demo check-in. Not verified.' : 'Location verified.');
-    }
-    if (q.source === 'gps' && navigator.geolocation) {
-      m.textContent = 'Checking your position...';
-      navigator.geolocation.getCurrentPosition(function (p) {
-        var pos = { lat: p.coords.latitude, lng: p.coords.longitude, accuracyM: p.coords.accuracy };
-        var r = G.checkArrival(pos, q.dest);
-        if (r.ok) complete(false);
-        else if (r.reason === 'low-accuracy') demoCheckin('Your location is too imprecise right now (about ' + Math.round(pos.accuracyM) + ' m). Move to open sky and try again, or use a demo check-in.');
-        else demoCheckin('You are about ' + G.formatDistance(r.distanceM) + ' from the destination. Get within ' + G.formatDistance(r.allowedM) + ' to verify, or use a demo check-in.');
-      }, function () { demoCheckin('No location fix is available.'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 });
-    } else {
-      demoCheckin(q.source === 'gps' ? 'Location is not available.' : 'This quest did not start from your device location, so your real position cannot be checked.');
-    }
+  /* ---------- the hunt ---------- */
+  $('#btn-hunt').addEventListener('click', function () {
+    if (!S.quest.dest) return;
+    S.quest.status = 'navigating'; save(); huntStart = 0; arriveTimer = 0; lastHeatLevel = -1;
+    $('#h-msg').textContent = ''; renderExplore(true); startWatch();
+    var c = $('#hunt-card'); if (c) c.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
   });
-
-  /* real map (only when the Leaflet library is present, i.e. in the hosted app) */
-  var map = null, mapLayer = null, picking = false;
-  function ensureMap() {
-    if (map || !window.L) return;
+  function startWatch() {
+    if (watchId != null) return;
+    if (!navigator.geolocation) { $('#h-sub').textContent = 'No GPS here. Use the demo check-in when you are ready.'; showDemoBtn(true); return; }
     try {
-      var el = $('#map');
-      el.hidden = false;
-      map = L.map(el, { zoomControl: true, worldCopyJump: true }).setView([G.DEMO_ORIGIN.lat, G.DEMO_ORIGIN.lng], 14);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(map);
-      mapLayer = L.layerGroup().addTo(map);
-      map.on('click', function (e) {
-        if (!picking) return;
-        setPicking(false);
-        sessionOrigin = { lat: e.latlng.lat, lng: e.latlng.lng };
-        S.quest = { status: 'idle', dest: null, origin: null, source: 'manual', radiusM: S.settings.radiusM }; save();
-        $('#loc-msg').textContent = 'Start point set on the map. Generate a destination around it.'; renderExplore();
-      });
-      $('#radarwrap').hidden = true; $('#radar-cap').hidden = true; $('#map-cap').hidden = false; $('#pick-row').hidden = false;
-    } catch (err) { map = null; $('#map').hidden = true; }
+      watchId = navigator.geolocation.watchPosition(function (p) {
+        geo = { lat: p.coords.latitude, lng: p.coords.longitude, accuracyM: p.coords.accuracy, heading: (typeof p.coords.heading === 'number' && !isNaN(p.coords.heading)) ? p.coords.heading : null };
+        onFix();
+      }, function (err) {
+        if (err && err.code === 1) { $('#h-sub').textContent = 'Location permission was not granted.'; showDemoBtn(true); }
+        else if (!geo) $('#h-sub').textContent = 'Waiting for a GPS signal. Try open sky.';
+      }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 });
+    } catch (e) { watchId = null; }
+    try { if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request('screen').then(function (w) { wake = w; }, function () { /* ignore */ }); } catch (e) { /* ignore */ }
+    var need = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+    $('#h-compass').hidden = !(need && !armed);
+    if (!need) armCompass();
   }
-  function setPicking(on) { picking = on; var b = $('#btn-pick'); b.setAttribute('aria-pressed', String(on)); b.lastChild.textContent = on ? 'Now tap a spot on the map' : 'Tap the map to set start'; if (map) $('#map').classList.toggle('picking', on); }
-  $('#btn-pick').addEventListener('click', function () { setPicking(!picking); });
-  function drawMap(fit) {
-    if (!map) return;
-    var o = origin(), r = S.settings.radiusM, d = S.quest.dest, st = S.quest.status;
-    mapLayer.clearLayers();
-    var circle = L.circle([o.lat, o.lng], { radius: r, color: '#47d3ff', weight: 2, dashArray: '6 6', fillColor: '#47d3ff', fillOpacity: 0.07 }).addTo(mapLayer);
-    L.circleMarker([o.lat, o.lng], { radius: 7, color: '#fff', weight: 2, fillColor: '#47d3ff', fillOpacity: 1 }).addTo(mapLayer);
-    if (d && st !== 'idle') {
-      L.polyline([[o.lat, o.lng], [d.lat, d.lng]], { color: '#9677ff', weight: 2, dashArray: '4 8' }).addTo(mapLayer);
-      L.marker([d.lat, d.lng], { icon: L.divIcon({ className: 'gq-pin' + (st === 'arrived' ? ' done' : ''), html: '<i></i>', iconSize: [26, 26], iconAnchor: [13, 13] }), keyboard: false }).addTo(mapLayer);
-    }
-    if (fit) { map.invalidateSize(); map.fitBounds(circle.getBounds(), { padding: [14, 14], animate: false }); }
+  function stopWatch() {
+    if (watchId != null) { try { navigator.geolocation.clearWatch(watchId); } catch (e) { /* ignore */ } watchId = null; }
+    if (wake) { try { wake.release(); } catch (e) { /* ignore */ } wake = null; }
+    showDemoBtn(false);
+  }
+  function armCompass() {
+    if (armed) return; armed = true;
+    var h = function (e) {
+      var v = typeof e.webkitCompassHeading === 'number' ? e.webkitCompassHeading : (e.absolute && typeof e.alpha === 'number' ? (360 - e.alpha) % 360 : null);
+      if (v != null) compass = v;
+    };
+    window.addEventListener('deviceorientationabsolute', h); window.addEventListener('deviceorientation', h);
+  }
+  $('#h-compass').addEventListener('click', function () {
+    DeviceOrientationEvent.requestPermission().then(function (r) { if (r === 'granted') { armCompass(); $('#h-compass').hidden = true; } else $('#h-msg').textContent = 'Compass permission was not granted. The arrow will point with north up.'; }, function () { $('#h-msg').textContent = 'Compass is not available.'; });
+  });
+  function showDemoBtn(on) { $('#btn-checkin-demo').hidden = !on; if (on && $('#dest-card').hidden) { /* demo button lives in the mark card; show it on the hunt card instead */ $('#h-msg').innerHTML = 'No usable GPS. <button class="btn" id="h-demo" style="margin-top:6px">Demo check-in (reduced reward)</button>'; } }
+  document.addEventListener('click', function (e) { if (e.target.closest('#h-demo') || e.target.closest('#btn-checkin-demo')) complete(true); });
+  function onFix() {
+    var q = S.quest; if (q.status !== 'navigating' || !q.dest) return;
+    if ($('#h-demo')) $('#h-msg').textContent = '';
+    var d = G.haversine(geo, q.dest);
+    if (!huntStart || d > huntStart) huntStart = d;
+    var r = G.checkArrival(geo, q.dest);
+    if (r.ok) {
+      if (!arriveTimer) arriveTimer = setTimeout(function () { arriveTimer = 0; if (S.quest.status === 'navigating' && geo && S.quest.dest && G.checkArrival(geo, S.quest.dest).ok) complete(false); }, 2500);
+    } else if (arriveTimer) { clearTimeout(arriveTimer); arriveTimer = 0; }
+    var lv = G.heat(d).level;
+    if (lv !== lastHeatLevel) { lastHeatLevel = lv; if (lv >= 3 && navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } } }
+    updateHunt(); pushScene();
+  }
+  function updateHunt() {
+    var q = S.quest, d = dist2dest(), sub = $('#h-sub');
+    if (d == null) { $('#h-dist').textContent = '--'; $('#h-heat').textContent = 'Waiting for GPS'; $('#h-heat').dataset.l = 0; sub.textContent = 'Stand in the open for a moment.'; return; }
+    var h = G.heat(d); $$('#h-bar i').forEach(function (b, i) { b.className = i < Math.max(1, h.level) ? 'on' + (h.level >= 3 ? ' h3' : '') : ''; });
+    $('#h-dist').textContent = G.formatDistance(d); $('#h-heat').textContent = h.label; $('#h-heat').dataset.l = h.level;
+    sub.textContent = 'GPS accuracy about ' + Math.round(geo.accuracyM) + ' m. ' + (geo.accuracyM > 100 ? 'Too weak to confirm arrival yet.' : 'Arrival counts within about ' + Math.round(30 + Math.min(geo.accuracyM, 50)) + ' m.');
+    void q;
+  }
+  $('#h-checkin').addEventListener('click', function () {
+    var m = $('#h-msg'), q = S.quest; if (!q.dest) return;
+    if (!geo) { m.innerHTML = 'No GPS fix yet. <button class="btn" id="h-demo" style="margin-top:6px">Demo check-in (reduced reward)</button>'; return; }
+    var r = G.checkArrival(geo, q.dest);
+    if (r.ok) { complete(false); return; }
+    var why = r.reason === 'low-accuracy' ? 'Your GPS is too imprecise right now (about ' + Math.round(geo.accuracyM) + ' m).' : 'You are about ' + G.formatDistance(r.distanceM) + ' away. Get within ' + G.formatDistance(r.allowedM) + '.';
+    m.innerHTML = esc(why) + ' <button class="btn" id="h-demo" style="margin-top:6px">Demo check-in (reduced reward)</button>';
+  });
+  function complete(demo) {
+    var q = S.quest; if (!q.dest || q.status === 'arrived') return;
+    stopWatch();
+    var ctx = { radiusM: q.dest.custom ? Math.max(100, q.dest.distanceM) : q.radiusM, demo: demo };
+    var roll = G.rollCollectible('explore', ctx, Math.random, S.collection);
+    var res = G.recordFind(S, { mode: 'explore', item: roll.item, isNew: roll.isNew, demo: demo, coords: G.roundCoarse(q.dest) }, Date.now());
+    S = res.state; S.quest.status = 'arrived'; save(); refreshHud();
+    renderExplore(true); reveal(res, roll, demo ? 'Demo check-in. Not verified.' : 'Arrival confirmed by GPS.');
   }
 
-  /* radar */
-  var raf = 0, sweep = 0;
-  function drawRadar() {
-    if (map) return;
-    var cv = $('#radar'); if (!cv || !cv.offsetWidth) return;
-    var dpr = Math.min(2, window.devicePixelRatio || 1), s = cv.offsetWidth;
-    if (cv.width !== Math.round(s * dpr)) { cv.width = cv.height = Math.round(s * dpr); }
-    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, s, s);
-    var cx = s / 2, R = s / 2 - 10;
-    var g = c.createRadialGradient(cx, cx, 0, cx, cx, R + 10); g.addColorStop(0, '#0b2238'); g.addColorStop(1, '#040813'); c.fillStyle = g; c.fillRect(0, 0, s, s);
-    c.strokeStyle = 'rgba(71,211,255,.28)'; c.lineWidth = 1; c.font = '11px "Share Tech Mono", monospace'; c.fillStyle = 'rgba(191,234,255,.75)'; c.textAlign = 'center';
-    var rM = S.settings.radiusM;
-    [1 / 3, 2 / 3, 1].forEach(function (f) { c.beginPath(); c.arc(cx, cx, R * f, 0, 6.2832); c.stroke(); c.fillText(G.formatDistance(rM * f), cx + R * f * 0.707 + 2, cx - R * f * 0.707 - 4); });
-    c.beginPath(); c.moveTo(cx, cx - R); c.lineTo(cx, cx + R); c.moveTo(cx - R, cx); c.lineTo(cx + R, cx); c.stroke();
-    for (var a = 0; a < 360; a += 10) { var t = a % 90 === 0 ? 10 : 5, an = a * Math.PI / 180; c.beginPath(); c.moveTo(cx + Math.sin(an) * R, cx - Math.cos(an) * R); c.lineTo(cx + Math.sin(an) * (R - t), cx - Math.cos(an) * (R - t)); c.stroke(); }
-    c.fillStyle = '#bfeaff'; c.fillText('N', cx, cx - R + 24); c.fillText('S', cx, cx + R - 14); c.fillText('E', cx + R - 12, cx + 4); c.fillText('W', cx - R + 12, cx + 4);
-    if (raf) { /* sweep */
-      var grd = c.createConicGradient ? c.createConicGradient(sweep, cx, cx) : null;
-      if (grd) { grd.addColorStop(0, 'rgba(71,211,255,0)'); grd.addColorStop(.92, 'rgba(71,211,255,0)'); grd.addColorStop(1, 'rgba(71,211,255,.28)'); c.fillStyle = grd; c.beginPath(); c.arc(cx, cx, R, 0, 6.2832); c.fill(); }
-    }
-    c.fillStyle = '#47d3ff'; c.shadowColor = '#47d3ff'; c.shadowBlur = 12; c.beginPath(); c.arc(cx, cx, 5, 0, 6.2832); c.fill();
-    var d = S.quest.dest;
-    if (d && S.quest.status !== 'idle') {
-      var rr = Math.min(R, d.distanceM / rM * R);
-      var an2 = d.bearingDeg * Math.PI / 180, x = cx + Math.sin(an2) * rr, y = cx - Math.cos(an2) * rr;
-      var done = S.quest.status === 'arrived', cancelled = S.quest.status === 'cancelled';
-      var col = done ? '#6be3b0' : cancelled ? '#8fa6c4' : '#9677ff';
-      c.shadowColor = col; c.shadowBlur = 16; c.strokeStyle = col; c.fillStyle = col; c.lineWidth = 2;
-      c.beginPath(); c.moveTo(x, y - 9); c.lineTo(x + 7, y); c.lineTo(x, y + 9); c.lineTo(x - 7, y); c.closePath(); c.fill();
-      c.shadowBlur = 0; c.setLineDash([4, 5]); c.globalAlpha = .6; c.beginPath(); c.moveTo(cx, cx); c.lineTo(x, y); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
-    }
-    c.shadowBlur = 0;
+  /* ---------- bearing instrument ---------- */
+  function drawArrow() {
+    var cv = $('#arrow'), c = cv.getContext('2d'), W = cv.width, cx = W / 2;
+    c.clearRect(0, 0, W, W);
+    c.strokeStyle = 'rgba(130,190,255,.35)'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cx, cx - 4, 0, 6.2832); c.stroke();
+    c.fillStyle = '#bfeaff'; c.font = '11px "Share Tech Mono", monospace'; c.textAlign = 'center'; c.fillText(compass == null ? 'N up' : 'live', cx, 14);
+    if (!geo || !S.quest.dest) return;
+    var ang = G.arrowAngle(G.bearing(geo, S.quest.dest), compass != null ? compass : (geo.heading != null ? geo.heading : null)) * Math.PI / 180;
+    c.save(); c.translate(cx, cx + 6); c.rotate(ang); c.shadowColor = '#9677ff'; c.shadowBlur = 14; c.fillStyle = '#c3b2ff';
+    c.beginPath(); c.moveTo(0, -34); c.lineTo(20, 18); c.lineTo(0, 8); c.lineTo(-20, 18); c.closePath(); c.fill(); c.restore();
   }
-  function startRadar() {
-    stopRadar(); if (map) return; if (reduced) { drawRadar(); return; }
-    var last = 0;
-    (function loop(ts) { raf = requestAnimationFrame(loop); if (ts - last < 50) return; last = ts; sweep = (sweep + 0.06) % 6.2832; drawRadar(); })(0);
-  }
-  function stopRadar() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 
-  /* ---------- GHOST ---------- */
-  var gs = null, gt = 0, WORDS = ['whisper', 'north', 'lantern', 'gate', 'cold', 'here', 'moon', 'behind', 'stay', 'open', 'key', 'hollow', 'echo', 'listen', 'water', 'stone'];
-  var emf = 0.3, MAX_REC = 5;
-  function fmt(sec) { sec = Math.max(0, Math.floor(sec)); return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0'); }
+  /* ---------- GHOST: instrument console ---------- */
+  var gs = null, gt = 0, boxOn = false, emf = 0.4, emfHist = [], MAX_REC = 5, sbWord = '', sbUntil = 0, sbFreq = 98.0, sbBins = [], evs = [], spikeAt = 0;
+  var sens = { on: false, stream: null, an: null, buf: null, ac: null, level: null, vib: 0, vbase: null, mag: null, mbase: null, motion: false, magSensor: null };
+  var WORDS = ['whisper', 'north', 'lantern', 'gate', 'cold', 'here', 'moon', 'behind', 'stay', 'open', 'key', 'hollow', 'echo', 'listen', 'water', 'stone'];
+  function addEvent(txt) { evs.unshift({ t: gs ? fmt((Date.now() - gs.start) / 1000) : tstr(Date.now()), txt: txt }); if (evs.length > 40) evs.pop(); renderEvents(); }
+  function renderEvents() { $('#ev-log').innerHTML = evs.length ? evs.slice(0, 10).map(function (e) { return '<div class="hrow"><span class="mono muted">' + esc(e.t) + '</span><span>' + esc(e.txt) + '</span></div>'; }).join('') : '<span class="muted small">Nothing logged yet.</span>'; }
   function renderGhost() {
     var on = !!gs, st = $('#gstatus'); st.textContent = on ? 'Investigating' : 'Standby'; st.dataset.s = on ? 'navigating' : 'idle';
     $('#btn-start').disabled = on; $('#btn-end').disabled = !on; $('#btn-rec').disabled = !on;
     $('#g-count').textContent = gs ? gs.finds : 0; $('#g-time').textContent = gs ? fmt((Date.now() - gs.start) / 1000) : '00:00';
-    renderNotes();
-    if (on) ghostRun();
+    renderNotes(); renderClips(); renderRecUi(); renderEvents(); ghostRun();
   }
   function renderNotes() {
     var list = S.notes.slice(0, 20);
     $('#notes').innerHTML = list.length ? list.map(function (n) { return '<div class="noteitem"><span class="cap">' + esc(n.at) + '</span><div>' + esc(n.text) + '</div></div>'; }).join('') : '<p class="small muted">No notes yet.</p>';
   }
+  function emfValue() { return sens.mag != null ? sens.mag : emf; }
   function ghostRun() {
-    clearInterval(gt); if (!gs) return;
-    var tick = 0;
+    clearInterval(gt); var tick = 0;
     gt = setInterval(function () {
       tick++;
-      $('#g-time').textContent = fmt((Date.now() - gs.start) / 1000);
-      emf += (Math.random() - 0.5) * 0.9; if (Math.random() < 0.03) emf += 3 + Math.random() * 3; emf = Math.max(0.1, Math.min(8, emf * 0.96 + 0.02));
-      var lv = Math.min(5, Math.floor(emf / 1.4) + (emf > 0.8 ? 1 : 0));
-      $$('#emf i').forEach(function (b, i) { b.className = i < lv ? 'on' + (i === 4 ? ' max' : i >= 2 ? ' hi' : '') : ''; });
-      $('#emf-val').textContent = emf.toFixed(1) + ' mG';
-      $('#sb-freq').textContent = 'FM ' + (87.5 + Math.random() * 20).toFixed(1);
-      if (tick % 28 === 0 && Math.random() < 0.8) {
-        var w = WORDS[Math.floor(Math.random() * WORDS.length)], log = $('#sb-log');
-        log.insertAdjacentHTML('afterbegin', '<div>' + fmt((Date.now() - gs.start) / 1000) + '  ' + esc(w) + '</div>');
-        while (log.children.length > 12) log.removeChild(log.lastChild);
+      if (gs) $('#g-time').textContent = fmt((Date.now() - gs.start) / 1000);
+      if (sens.mag == null) { emf += (Math.random() - 0.5) * 0.35; if (Math.random() < 0.012) emf += 2.5 + Math.random() * 3; emf = Math.max(0.1, Math.min(9.5, emf * 0.97 + 0.012)); }
+      var v = emfValue(); emfHist.push(v); if (emfHist.length > 150) emfHist.shift();
+      var lim = sens.mag != null ? 6 : 5, now = Date.now();
+      if (gs && v > lim && now - spikeAt > 8000) { spikeAt = now; addEvent('EMF spike ' + v.toFixed(1) + ' µT' + (sens.mag != null ? '' : ' (simulated)')); }
+      $('#emf-val').textContent = v.toFixed(1) + ' µT'; $('#emf-tag').textContent = sens.mag != null ? 'REAL' : 'SIM'; $('#emf-tag').className = 'tag ' + (sens.mag != null ? 'real' : 'sim');
+      if (boxOn) {
+        sbFreq = 87.5 + ((sbFreq - 87.5 + 0.9 + Math.random() * 1.4) % 20.5);
+        $('#sb-freq').textContent = 'FM ' + sbFreq.toFixed(1);
+        if (tick % 22 === 0 && Math.random() < 0.8) { sbWord = WORDS[Math.floor(Math.random() * WORDS.length)]; sbUntil = performance.now() + 1800; if (gs) addEvent('Spirit box: "' + sbWord + '" (simulated)'); A.boxBurst(); }
       }
-    }, 250);
+      if (sens.on) {
+        $('#sv-audio').textContent = sens.level == null ? '--' : sens.level.toFixed(0) + ' dBFS';
+        $('#sv-motion').textContent = sens.motion ? sens.vib.toFixed(2) + ' m/s²' : '--';
+        $('#sv-head').textContent = compass == null ? '--' : Math.round(compass) + '° ' + G.compassLabel(compass);
+        $('#sv-mag').textContent = sens.mag == null ? 'n/a' : sens.mag.toFixed(1) + ' µT';
+      }
+    }, 100);
   }
   function ghostPause() { clearInterval(gt); gt = 0; }
+  function sensorsOn() {
+    if (sens.on) return; sens.on = true; var msg = $('#sens-msg'); msg.textContent = '';
+    $('#btn-sens').textContent = 'Sensors on'; $('#btn-sens').setAttribute('aria-pressed', 'true');
+    /* compass + motion (iOS asks once) */
+    var ask = function (C) { return (C && typeof C.requestPermission === 'function') ? C.requestPermission().catch(function () { return 'denied'; }) : Promise.resolve('granted'); };
+    ask(window.DeviceOrientationEvent).then(function (r) { if (r === 'granted') armCompass(); });
+    ask(window.DeviceMotionEvent).then(function (r) {
+      if (r !== 'granted') return;
+      window.addEventListener('devicemotion', onMotion);
+    });
+    /* magnetometer (Chrome on Android) */
+    try { if ('Magnetometer' in window) { var m = new window.Magnetometer({ frequency: 10 }); m.addEventListener('reading', function () { var mag = Math.sqrt(m.x * m.x + m.y * m.y + m.z * m.z); sens.mbase = sens.mbase == null ? mag : sens.mbase * 0.995 + mag * 0.005; sens.mag = Math.abs(mag - sens.mbase); }); m.start(); sens.magSensor = m; } } catch (e) { sens.magSensor = null; }
+    /* microphone level */
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }).then(function (st) {
+        if (!sens.on) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
+        var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        sens.stream = st; sens.ac = new AC(); var src = sens.ac.createMediaStreamSource(st); sens.an = sens.ac.createAnalyser(); sens.an.fftSize = 1024; src.connect(sens.an); sens.buf = new Float32Array(sens.an.fftSize);
+        if (sens.ac.state === 'suspended') sens.ac.resume();
+      }, function () { msg.textContent = 'Microphone not granted, so the audio level stays off.'; });
+    }
+  }
+  function onMotion(e) {
+    var a = e.accelerationIncludingGravity || e.acceleration; if (!a || a.x == null) return;
+    var m = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z); sens.motion = true;
+    sens.vbase = sens.vbase == null ? m : sens.vbase * 0.98 + m * 0.02; sens.vib = sens.vib * 0.8 + Math.abs(m - sens.vbase) * 0.2;
+  }
+  function sensorsOff() {
+    if (!sens.on) return; sens.on = false;
+    window.removeEventListener('devicemotion', onMotion);
+    if (sens.magSensor) { try { sens.magSensor.stop(); } catch (e) { /* ignore */ } sens.magSensor = null; }
+    if (sens.stream) sens.stream.getTracks().forEach(function (t) { t.stop(); }); if (sens.ac) { try { sens.ac.close(); } catch (e) { /* ignore */ } }
+    sens.stream = null; sens.ac = null; sens.an = null; sens.level = null; sens.mag = null; sens.mbase = null; sens.motion = false; sens.vbase = null; sens.vib = 0;
+    $('#btn-sens').textContent = 'Enable sensors'; $('#btn-sens').setAttribute('aria-pressed', 'false');
+    ['audio', 'motion', 'head', 'mag'].forEach(function (k) { $('#sv-' + k).textContent = '--'; });
+  }
+  $('#btn-sens').addEventListener('click', function () { if (sens.on) sensorsOff(); else sensorsOn(); });
+  function readLevel() {
+    if (!sens.an) return;
+    sens.an.getFloatTimeDomainData(sens.buf); var s = 0, i; for (i = 0; i < sens.buf.length; i++) s += sens.buf[i] * sens.buf[i];
+    var db = 20 * Math.log10(Math.sqrt(s / sens.buf.length) + 1e-6); sens.level = sens.level == null ? db : sens.level * 0.8 + db * 0.2;
+  }
+
   $('#btn-start').addEventListener('click', function () {
-    gs = { start: Date.now(), finds: 0, lastRec: 0 };
-    $('#g-msg').textContent = 'Investigation started. Simulated tools are running.'; $('#sb-log').innerHTML = ''; renderGhost();
+    gs = { start: Date.now(), finds: 0, lastRec: 0 }; evs = []; spikeAt = 0;
+    $('#g-msg').textContent = 'Investigation running. Events are logged below.'; addEvent('Investigation started'); renderGhost();
+  });
+  $('#btn-box').addEventListener('click', function () {
+    boxOn = !boxOn; $('#btn-box').setAttribute('aria-pressed', String(boxOn));
+    if (boxOn) A.boxStart(); else { A.boxStop(); $('#sb-freq').textContent = 'FM --.-'; }
+    $('#btn-box').textContent = boxOn ? 'Spirit box: on' : 'Spirit box';
   });
   $('#btn-rec').addEventListener('click', function () {
     if (!gs) return;
     var now = Date.now();
-    if (gs.finds >= MAX_REC) { $('#g-msg').textContent = 'That is the limit of ' + MAX_REC + ' discoveries for one session. End this investigation and begin another.'; return; }
-    if (now - gs.lastRec < 15000) { $('#g-msg').textContent = 'The air is still. Wait a few seconds before the next discovery.'; return; }
+    if (gs.finds >= MAX_REC) { $('#g-msg').textContent = 'That is the limit of ' + MAX_REC + ' sightings for one session. End this one and begin another.'; return; }
+    if (now - gs.lastRec < 15000) { $('#g-msg').textContent = 'Wait a few seconds between sightings.'; return; }
     gs.lastRec = now; gs.finds++;
     var roll = G.rollCollectible('ghost', { sessionSec: (now - gs.start) / 1000 }, Math.random, S.collection);
     var res = G.recordFind(S, { mode: 'ghost', item: roll.item, isNew: roll.isNew, demo: true }, now);
-    S = res.state; save(); refreshHud(); renderGhost(); reveal(res, roll, 'Simulated encounter.');
+    S = res.state; save(); refreshHud(); addEvent('Sighting logged: ' + roll.item.name); renderGhost(); reveal(res, roll, 'Logged as an entertainment encounter.');
   });
   $('#btn-end').addEventListener('click', function () {
     if (!gs) return;
-    var dur = (Date.now() - gs.start) / 1000, rec = { id: gs.start, start: gs.start, durationSec: Math.round(dur), finds: gs.finds };
+    var dur = (Date.now() - gs.start) / 1000, rc = { id: gs.start, start: gs.start, durationSec: Math.round(dur), finds: gs.finds };
     var res = G.finishSession(S, dur, Date.now()); S = res.state;
-    S.sessions.unshift(rec); S.sessions = S.sessions.slice(0, 30); save(); refreshHud();
-    gs = null; ghostPause(); renderGhost();
-    $('#g-msg').textContent = res.completed ? 'Investigation complete: +' + res.xpGained + ' XP.' : 'Session saved. Investigations under a minute do not count toward quests or XP.';
+    S.sessions.unshift(rc); S.sessions = S.sessions.slice(0, 30); save(); refreshHud();
+    addEvent('Investigation ended (' + fmt(dur) + ')'); gs = null; renderGhost();
+    $('#g-msg').textContent = res.completed ? 'Investigation complete: +' + res.xpGained + ' XP.' : 'Session saved. Investigations under a minute do not count toward XP.';
     if (res.completed && (res.levelUp || res.newBadges.length)) reveal({ state: S, xpGained: 0, levelUp: res.levelUp, newBadges: res.newBadges }, null, '');
   });
   $('#btn-note').addEventListener('click', function () {
     var v = $('#note-in').value.trim(); if (!v) return;
-    var at = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + (gs ? ' \u00b7 session ' + fmt((Date.now() - gs.start) / 1000) : '');
+    var at = tstr(Date.now()) + (gs ? ' · session ' + fmt((Date.now() - gs.start) / 1000) : '');
     S.notes.unshift({ ts: Date.now(), at: at, text: v.slice(0, 400) }); S.notes = S.notes.slice(0, 100);
     save(); $('#note-in').value = ''; renderNotes(); toast('Note saved on this device.');
+  });
+
+  /* EMF gauge + trace */
+  function drawEmf() {
+    var cv = $('#emf-cv'), s = F.sizeCanvas(cv); if (!s) return;
+    var c = s.c, w = s.w, h = s.h, real = sens.mag != null, max = real ? 20 : 10, v = Math.min(max, emfValue()), gw = Math.min(h * 1.5, w * 0.45), cx = gw / 2 + 6, cy = h - 18, R = gw / 2 - 8;
+    c.clearRect(0, 0, w, h);
+    c.lineWidth = 1; c.strokeStyle = 'rgba(130,190,255,.35)'; c.fillStyle = 'rgba(191,234,255,.8)'; c.font = '10px "Share Tech Mono", monospace'; c.textAlign = 'center';
+    c.beginPath(); c.arc(cx, cy, R, Math.PI, 0); c.stroke();
+    for (var i = 0; i <= 10; i++) { var a = Math.PI + i / 10 * Math.PI, r2 = R - (i % 5 === 0 ? 10 : 5); c.beginPath(); c.moveTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); c.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2); c.stroke(); if (i % 5 === 0) c.fillText(String(i / 10 * max), cx + Math.cos(a) * (R - 22), cy + Math.sin(a) * (R - 22) + 3); }
+    var ang = Math.PI + v / max * Math.PI; c.strokeStyle = v / max > 0.5 ? '#ffb066' : '#7fe8ff'; c.lineWidth = 2; c.shadowColor = c.strokeStyle; c.shadowBlur = 8;
+    c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(ang) * (R - 4), cy + Math.sin(ang) * (R - 4)); c.stroke(); c.shadowBlur = 0; c.fillStyle = '#e9f3ff'; c.beginPath(); c.arc(cx, cy, 3, 0, 6.2832); c.fill();
+    var tx = gw + 22, tw = w - tx - 6; c.strokeStyle = 'rgba(130,190,255,.2)'; c.lineWidth = 1; c.strokeRect(tx, 8, tw, h - 16);
+    c.beginPath(); c.moveTo(tx, h / 2); c.lineTo(tx + tw, h / 2); c.stroke();
+    if (emfHist.length > 1) { c.strokeStyle = '#47d3ff'; c.lineWidth = 1.5; c.beginPath(); emfHist.forEach(function (e, k) { var x = tx + k / 149 * tw, y = h - 10 - Math.min(1, e / max) * (h - 20); if (k) c.lineTo(x, y); else c.moveTo(x, y); }); c.stroke(); }
+  }
+  /* spirit box scan display */
+  function drawSb() {
+    var cv = $('#sb-cv'), s = F.sizeCanvas(cv); if (!s) return; var c = s.c, w = s.w, h = s.h, n = 56, i;
+    c.clearRect(0, 0, w, h);
+    for (i = 0; i < n; i++) { var tgt = boxOn ? Math.random() * 0.7 + (Math.abs(i / n - (sbFreq - 87.5) / 20.5) < 0.04 ? 0.3 : 0) : 0.04; sbBins[i] = (sbBins[i] || 0) * 0.7 + tgt * 0.3; var bh = sbBins[i] * (h - 26); c.fillStyle = 'rgba(71,211,255,.75)'; c.fillRect(i * (w / n) + 1, h - 18 - bh, w / n - 2, bh); }
+    c.fillStyle = 'rgba(191,234,255,.7)'; c.font = '10px "Share Tech Mono", monospace'; c.textAlign = 'center';
+    [88, 92, 96, 100, 104, 108].forEach(function (f) { c.fillText(String(f), (f - 87.5) / 20.5 * w, h - 4); });
+    if (boxOn) { var x = (sbFreq - 87.5) / 20.5 * w; c.strokeStyle = '#ffb066'; c.lineWidth = 2; c.beginPath(); c.moveTo(x, 4); c.lineTo(x, h - 16); c.stroke(); }
+    if (performance.now() < sbUntil) { c.fillStyle = '#ffe0b3'; c.font = '16px "Share Tech Mono", monospace'; c.textAlign = 'left'; c.fillText(sbWord.toUpperCase(), 8, 20); }
+  }
+
+  /* ---------- EVP recorder ---------- */
+  var rec = null, recLevels = [], recSec = 0, playing = null, playT = 0;
+  var MAXS = G.LIMITS.MAX_CLIP_SEC;
+  function renderRecUi() {
+    var b = $('#rec-go'), on = !!rec;
+    b.innerHTML = on ? '<svg class="i"><use href="#i-stop"/></svg>Stop and save' : '<svg class="i"><use href="#i-mic"/></svg>Record';
+    $('#rec-mark').disabled = !on; $('#rec-card').classList.toggle('on-air', on);
+    $('#rec-state').innerHTML = on ? '<span class="rec-dot"></span>Recording' : 'Ready';
+    $('#rec-time').textContent = fmt(recSec) + ' / ' + fmt(MAXS);
+    if (!A.supported()) { $('#rec-msg').textContent = 'Recording is not supported in this browser or view. Open GhostQuest from its web address in Safari or Chrome.'; b.disabled = true; }
+  }
+  function drawWave() {
+    var cv = $('#rec-wave'), s = F.sizeCanvas(cv); if (!s) return;
+    var c = s.c, w = s.w, h = s.h; c.clearRect(0, 0, w, h);
+    c.strokeStyle = 'rgba(130,190,255,.25)'; c.beginPath(); c.moveTo(0, h / 2); c.lineTo(w, h / 2); c.stroke();
+    var n = Math.floor(w / 3), st = Math.max(0, recLevels.length - n);
+    c.fillStyle = rec ? '#ff7a7a' : '#47d3ff';
+    for (var i = st; i < recLevels.length; i++) { var v = Math.max(1, recLevels[i] * (h - 6)), x = (i - st) * 3; c.fillRect(x, (h - v) / 2, 2, v); }
+  }
+  $('#rec-go').addEventListener('click', function () {
+    if (rec) { stopRecording(); return; }
+    stopPlay(); recLevels = []; recSec = 0; $('#rec-msg').textContent = 'Allow the microphone when asked.';
+    var last = 0;
+    A.startRecording({
+      maxSec: MAXS,
+      onLevel: function (lv) { var n = performance.now(); if (n - last > 40) { recLevels.push(Math.min(1, lv * 1.6)); if (recLevels.length > 600) recLevels.shift(); last = n; } },
+      onTick: function (sec) { recSec = sec; $('#rec-time').textContent = fmt(sec) + ' / ' + fmt(MAXS); },
+      onAutoStop: function () { stopRecording(); }
+    }).then(function (r) { rec = r; $('#rec-msg').textContent = 'Recording. Speak, wait, listen.'; renderRecUi(); }, function (err) {
+      $('#rec-msg').textContent = (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) ? 'Microphone permission was not granted. Allow it in the browser or Settings, then try again.' : 'The microphone could not be started here.';
+    });
+  });
+  $('#rec-mark').addEventListener('click', function () { if (rec) { var s = rec.mark(); toast('Marked at ' + fmt(s)); } });
+  function stopRecording() {
+    var r = rec; if (!r) return; rec = null;
+    r.stop().then(function (out) {
+      renderRecUi(); if (!out) return;
+      var id = 'c' + Date.now().toString(36), meta = { id: id, durationSec: out.durationSec, marks: out.marks, peaks: out.peaks, mime: out.mime, size: out.blob.size };
+      var res = G.addClip(S, meta, Date.now());
+      if (!res.kept) { $('#rec-msg').textContent = 'Too short to keep (under 3 seconds).'; return; }
+      A.store.put(id, out.blob).then(function () {
+        S = res.state; save(); refreshHud();
+        res.evicted.forEach(function (e) { A.store.del(e).catch(function () { /* ignore */ }); });
+        $('#rec-msg').textContent = 'Saved on this device. Listen back with headphones.'; if (gs) addEvent('EVP recorded (' + fmt(out.durationSec) + ')'); if (res.xpGained) toast('Daily quest done: +' + res.xpGained + ' XP');
+        renderClips();
+      }, function () { $('#rec-msg').textContent = 'The recording could not be saved (storage is full or blocked).'; });
+    });
+  }
+  function renderClips() {
+    var el = $('#clips');
+    el.innerHTML = S.clips.length ? S.clips.map(function (c) {
+      var open = c.id === playing;
+      return '<div class="clip" data-id="' + esc(c.id) + '"><div class="head"><strong>' + esc(c.name || 'EVP ' + tstr(c.ts)) + '</strong><span class="mono small muted">' + fmt(c.durationSec) + (c.marks.length ? ' · ' + c.marks.length + ' marks' : '') + (c.rewarded ? ' · claimed' : '') + '</span></div>' +
+        '<canvas data-peaks="' + esc(c.id) + '" aria-hidden="true"></canvas>' +
+        '<div class="btns"><button class="btn" data-act="play">' + (open ? 'Stop' : 'Play') + '</button>' +
+        '<button class="chip" data-act="enh" aria-pressed="' + (enhance ? 'true' : 'false') + '">Enhance</button>' +
+        '<button class="btn" data-act="claim"' + (c.rewarded || c.durationSec < G.LIMITS.EVP_MIN_SEC ? ' disabled' : '') + '>I heard something</button>' +
+        '<button class="btn" data-act="save">Save file</button><button class="btn danger" data-act="del">Delete</button></div>' +
+        '<input type="text" data-act="note" maxlength="160" placeholder="Note (what did you hear?)" aria-label="Note for this recording" value="' + esc(c.note || '') + '"></div>';
+    }).join('') : '<p class="small muted">No recordings yet.</p>';
+    $$('canvas[data-peaks]', el).forEach(function (cv) { var cl = clipById(cv.dataset.peaks); if (cl) drawPeaks(cv, cl, cl.id === playing ? playT / cl.durationSec : -1); });
+  }
+  function clipById(id) { var r = null; S.clips.forEach(function (c) { if (c.id === id) r = c; }); return r; }
+  function drawPeaks(cv, cl, prog) {
+    var s = F.sizeCanvas(cv); if (!s) return; var c = s.c, w = s.w, h = s.h; c.clearRect(0, 0, w, h);
+    var n = cl.peaks.length || 1, bw = w / n;
+    for (var i = 0; i < n; i++) { var v = Math.max(1, (cl.peaks[i] || 0) * (h - 6)); c.fillStyle = (prog >= 0 && i / n <= prog) ? '#c3b2ff' : '#47d3ff'; c.fillRect(i * bw, (h - v) / 2, Math.max(1, bw - 1), v); }
+    c.fillStyle = '#ffd48a'; cl.marks.forEach(function (m) { var x = Math.min(w - 2, m / Math.max(1, cl.durationSec) * w); c.fillRect(x, 0, 2, h); });
+  }
+  var enhance = false;
+  function stopPlay() { A.stopPlayback(); if (playing) { playing = null; playT = 0; if (current === 'ghost') renderClips(); } }
+  $('#clips').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]'); if (!b || b.tagName === 'INPUT') return;
+    var row = b.closest('.clip'), id = row.dataset.id, cl = clipById(id), act = b.dataset.act; if (!cl) return;
+    if (act === 'play') {
+      if (playing === id) { stopPlay(); return; }
+      stopPlay();
+      A.store.get(id).then(function (blob) {
+        if (!blob) { toast('The audio for this clip is missing.'); return; }
+        playing = id; renderClips();
+        A.play(blob, { enhance: enhance, onTime: function (t) { playT = t; var cv = $('canvas[data-peaks="' + id + '"]'); if (cv) drawPeaks(cv, cl, t / cl.durationSec); }, onEnd: function () { stopPlay(); }, onError: function () { toast('This clip could not be played.'); stopPlay(); } }).catch(function () { toast('Playback was blocked. Tap Play again.'); stopPlay(); });
+      }, function () { toast('Could not read the recording.'); });
+    } else if (act === 'enh') { enhance = !enhance; A.setEnhance(enhance); $$('#clips [data-act="enh"]').forEach(function (x) { x.setAttribute('aria-pressed', String(enhance)); }); }
+    else if (act === 'claim') {
+      var r = G.claimEvp(S, id, Math.random, Date.now());
+      if (!r.ok) { toast({ short: 'Recordings under 10 seconds cannot be claimed.', done: 'You already claimed this one.', limit: 'Five EVP finds a day. Come back tomorrow.', missing: 'Clip not found.' }[r.reason]); return; }
+      S = r.state; save(); refreshHud(); renderClips(); reveal(r.res, r.roll, 'Your ears, your call. Reward for listening.');
+    } else if (act === 'save') {
+      A.store.get(id).then(function (blob) {
+        if (!blob) return; var u = URL.createObjectURL(blob), a = document.createElement('a'), ext = /mp4|m4a/.test(blob.type) ? 'm4a' : /ogg/.test(blob.type) ? 'ogg' : 'webm';
+        a.href = u; a.download = 'ghostquest-evp-' + id + '.' + ext; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+      });
+    } else if (act === 'del') {
+      if (b.dataset.sure) { if (playing === id) stopPlay(); S.clips = S.clips.filter(function (x) { return x.id !== id; }); save(); A.store.del(id).catch(function () { /* ignore */ }); renderClips(); }
+      else { b.dataset.sure = '1'; b.textContent = 'Really delete?'; }
+    }
+  });
+  $('#clips').addEventListener('change', function (e) {
+    if (e.target.dataset.act !== 'note') return; var cl = clipById(e.target.closest('.clip').dataset.id); if (cl) { cl.note = e.target.value.slice(0, 160); save(); }
+  });
+
+  /* ---------- SLS camera: live camera, dot projection, motion-fitted figure (all on device) ---------- */
+  var sls = { track: true, pose: null, pstate: 'idle', poses: [], smooth: [], lastDet: 0, stream: null, video: null, raf: 0, facing: 'environment', dots: true, fig: true, sens: 5, bg: null, small: null, sctx: null, mm: null, box: null, seen: 0, lost: 0, shake: 0, frac: 0, acq: 0, wasFig: false, lastAn: 0, t0: 0, ui: '' };
+  var SW = 80, SH = 60;
+  function slsStatus(txt) { if (sls.ui !== txt) { sls.ui = txt; $('#sls-status').textContent = txt; } }
+  function startSls() {
+    var msg = $('#sls-msg'); stopSls();
+    sls.bg = null; sls.box = null; sls.seen = 0; sls.lost = 0; sls.acq = 0; sls.wasFig = false; sls.mm = new Float32Array(SW * SH); sls.t0 = performance.now(); sls.poses = []; sls.smooth = [];
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { msg.textContent = 'The camera is not available in this browser or view. Open GhostQuest from its web address in Safari or Chrome.'; msg.hidden = false; slsStatus('No camera'); return; }
+    msg.textContent = 'Starting camera. Allow access when asked.'; msg.hidden = false; slsStatus('Starting');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: sls.facing }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }).then(function (stream) {
+      if (current !== 'sls') { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      var v = document.createElement('video'); v.muted = true; v.setAttribute('playsinline', ''); v.srcObject = stream; sls.stream = stream; sls.video = v;
+      var sm = document.createElement('canvas'); sm.width = SW; sm.height = SH; sls.small = sm; sls.sctx = sm.getContext('2d', { willReadFrequently: true });
+      v.play().then(function () {}, function () {});
+      slsStatus('Scanning'); sls.raf = requestAnimationFrame(slsLoop); if (sls.track) loadPose();
+    }, function (err) {
+      msg.textContent = (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) ? 'Camera permission was not granted. Allow it in the browser or in Settings, then reopen this tool.' : 'The camera could not be started here.'; msg.hidden = false; slsStatus('No camera');
+    });
+  }
+  function stopSls() {
+    if (sls.raf) cancelAnimationFrame(sls.raf); sls.raf = 0;
+    if (sls.stream) sls.stream.getTracks().forEach(function (t) { t.stop(); });
+    sls.stream = null; sls.video = null;
+  }
+  function slsAnalyse() {
+    var v = sls.video, c = sls.sctx; c.drawImage(v, 0, 0, SW, SH);
+    var d = c.getImageData(0, 0, SW, SH).data, n = SW * SH, g = new Float32Array(n), i;
+    for (i = 0; i < n; i++) g[i] = d[i * 4] * 0.3 + d[i * 4 + 1] * 0.59 + d[i * 4 + 2] * 0.11;
+    if (!sls.bg) { sls.bg = g; return; }
+    var thr = 40 - sls.sens * 3, mask = new Uint8Array(n), cnt = 0;
+    for (i = 0; i < n; i++) { if (Math.abs(g[i] - sls.bg[i]) > thr) { mask[i] = 1; cnt++; } sls.bg[i] = sls.bg[i] * 0.92 + g[i] * 0.08; }
+    sls.frac = cnt / n;
+    for (i = 0; i < n; i++) sls.mm[i] = sls.mm[i] * 0.6 + mask[i] * 0.4;
+    if (sls.frac > 0.4) { sls.shake = 6; sls.bg = g; sls.box = null; sls.seen = 0; return; }   /* whole picture moved: the phone moved, not a subject */
+    if (sls.shake > 0) { sls.shake--; return; }
+    var dil = new Uint8Array(n), x, y;
+    for (y = 1; y < SH - 1; y++) for (x = 1; x < SW - 1; x++) { i = y * SW + x; if (mask[i] || mask[i - 1] || mask[i + 1] || mask[i - SW] || mask[i + SW]) dil[i] = 1; }
+    var seen = new Uint8Array(n), best = null, stack = [], k, p, a, minA = 30 + (10 - sls.sens) * 14;
+    for (i = 0; i < n; i++) {
+      if (!dil[i] || seen[i]) continue;
+      stack.length = 0; stack.push(i); seen[i] = 1; a = 0; var x0 = SW, x1 = 0, y0 = SH, y1 = 0;
+      while (stack.length) {
+        p = stack.pop(); a++; x = p % SW; y = (p / SW) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        k = p - 1; if (x > 0 && dil[k] && !seen[k]) { seen[k] = 1; stack.push(k); }
+        k = p + 1; if (x < SW - 1 && dil[k] && !seen[k]) { seen[k] = 1; stack.push(k); }
+        k = p - SW; if (y > 0 && dil[k] && !seen[k]) { seen[k] = 1; stack.push(k); }
+        k = p + SW; if (y < SH - 1 && dil[k] && !seen[k]) { seen[k] = 1; stack.push(k); }
+      }
+      if (a >= minA && (!best || a > best.a)) best = { a: a, x0: x0, y0: y0, x1: x1 + 1, y1: y1 + 1 };
+    }
+    if (best) {
+      var b = sls.box;
+      if (!b) sls.box = { x0: best.x0, y0: best.y0, x1: best.x1, y1: best.y1 };
+      else { var l = 0.35; b.x0 += (best.x0 - b.x0) * l; b.y0 += (best.y0 - b.y0) * l; b.x1 += (best.x1 - b.x1) * l; b.y1 += (best.y1 - b.y1) * l; }
+      sls.seen++; sls.lost = 0;
+    } else { sls.lost++; if (sls.lost > 12) { sls.box = null; sls.seen = 0; } }
+  }
+  function slsSkeleton(c, b, t) {
+    var H = b.h, cx = b.x + b.w / 2, top = b.y, sw = Math.max(Math.min(b.w, H * 0.6) * 0.32, H * 0.09), j = function (a) { return Math.sin(t * 3 + a) * H * 0.004; };
+    var P = { head: [cx, top + 0.07 * H], neck: [cx, top + 0.15 * H], hip: [cx, top + 0.55 * H],
+      sl: [cx - sw, top + 0.18 * H], sr: [cx + sw, top + 0.18 * H], el: [cx - sw * 1.5, top + 0.37 * H + j(1)], er: [cx + sw * 1.5, top + 0.37 * H + j(2)], hl: [cx - sw * 1.5, top + 0.55 * H + j(3)], hr: [cx + sw * 1.5, top + 0.55 * H + j(4)],
+      pl: [cx - sw * 0.55, top + 0.55 * H], pr: [cx + sw * 0.55, top + 0.55 * H], kl: [cx - sw * 0.6, top + 0.77 * H], kr: [cx + sw * 0.6, top + 0.77 * H], fl: [cx - sw * 0.65, top + H], fr: [cx + sw * 0.65, top + H] };
+    var bones = [['neck', 'hip'], ['sl', 'sr'], ['sl', 'el'], ['el', 'hl'], ['sr', 'er'], ['er', 'hr'], ['pl', 'pr'], ['pl', 'kl'], ['kl', 'fl'], ['pr', 'kr'], ['kr', 'fr'], ['head', 'neck']];
+    c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#9dfff0'; c.fillStyle = '#e9fffb'; c.shadowColor = '#47ffd8'; c.shadowBlur = 12; c.lineWidth = Math.max(2, H * 0.014);
+    bones.forEach(function (e) { c.beginPath(); c.moveTo(P[e[0]][0], P[e[0]][1]); c.lineTo(P[e[1]][0], P[e[1]][1]); c.stroke(); });
+    c.beginPath(); c.arc(P.head[0], P.head[1], H * 0.055, 0, 6.2832); c.stroke();
+    Object.keys(P).forEach(function (k) { if (k === 'head') return; c.beginPath(); c.arc(P[k][0], P[k][1], Math.max(2.5, H * 0.011), 0, 6.2832); c.fill(); });
+    c.restore();
+  }
+  /* ---------- body tracking (MediaPipe Pose Landmarker, runs on the device) ---------- */
+  var MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14', MP_MODEL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+  var BONES = [[11, 12], [11, 23], [12, 24], [23, 24], [11, 13], [13, 15], [12, 14], [14, 16], [23, 25], [25, 27], [24, 26], [26, 28], [27, 29], [28, 30], [15, 19], [16, 20]];
+  function slsMsg(text, ms) { var m = $('#sls-msg'); m.textContent = text; m.hidden = !text; if (ms) setTimeout(function () { if (m.textContent === text) m.hidden = true; }, ms); }
+  function loadPose() {
+    if (sls.pstate === 'loading' || sls.pstate === 'ready') return;
+    sls.pstate = 'loading'; slsMsg('Loading the body tracker. The first time this downloads about 15 MB, then it works offline.');
+    var p;
+    if (window.__gqPoseStub) p = Promise.resolve(window.__gqPoseStub);
+    else p = import(MP + '/vision_bundle.mjs').then(function (m) {
+      return m.FilesetResolver.forVisionTasks(MP + '/wasm').then(function (fs) {
+        var mk = function (d) { return m.PoseLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: MP_MODEL, delegate: d }, runningMode: 'VIDEO', numPoses: 2, minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5 }); };
+        return mk('GPU').catch(function () { return mk('CPU'); });
+      });
+    });
+    p.then(function (lm) { sls.pose = lm; sls.pstate = 'ready'; slsMsg('Body tracker ready. It runs on your device.', 3500); }, function () {
+      sls.pstate = 'failed'; slsMsg('The body tracker could not load (it needs internet once). Using motion tracking instead.', 6000);
+    });
+  }
+  function poseDetect(ts) {
+    if (!sls.track || sls.pstate !== 'ready' || ts - sls.lastDet < 66) return; sls.lastDet = ts;
+    try {
+      var r = sls.pose.detectForVideo(sls.video, ts), L = (r && r.landmarks) || [];
+      sls.poses = L.map(function (lm, i) { var old = sls.smooth[i]; var cur = lm.map(function (q, k) { var o = old && old[k]; return o ? { x: o.x + (q.x - o.x) * 0.55, y: o.y + (q.y - o.y) * 0.55, v: q.visibility == null ? 1 : q.visibility } : { x: q.x, y: q.y, v: q.visibility == null ? 1 : q.visibility }; }); return cur; });
+      sls.smooth = sls.poses;
+    } catch (e) { sls.poses = []; }
+  }
+  function slsBody(c, lm, map, idx) {
+    var P = function (k) { var q = lm[k]; return q && q.v > 0.4 ? map(q) : null; };
+    c.save(); c.lineCap = 'round'; c.strokeStyle = '#9dfff0'; c.fillStyle = '#e9fffb'; c.shadowColor = '#47ffd8'; c.shadowBlur = 10;
+    var sh = P(11), sh2 = P(12), size = (sh && sh2) ? Math.hypot(sh.x - sh2.x, sh.y - sh2.y) : 80;
+    c.lineWidth = Math.max(2, size * 0.05);
+    BONES.forEach(function (b) { var a = P(b[0]), d = P(b[1]); if (a && d) { c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(d.x, d.y); c.stroke(); } });
+    var e1 = P(7), e2 = P(8), n = P(0);
+    if (n) { var r = (e1 && e2) ? Math.hypot(e1.x - e2.x, e1.y - e2.y) * 0.75 : size * 0.3; c.beginPath(); c.arc((e1 && e2) ? (e1.x + e2.x) / 2 : n.x, (e1 && e2) ? (e1.y + e2.y) / 2 : n.y, Math.max(6, r), 0, 6.2832); c.stroke(); if (sh && sh2) { c.beginPath(); c.moveTo(n.x, n.y); c.lineTo((sh.x + sh2.x) / 2, (sh.y + sh2.y) / 2); c.stroke(); } }
+    [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28].forEach(function (k) { var q = P(k); if (q) { c.beginPath(); c.arc(q.x, q.y, Math.max(3, size * 0.06), 0, 6.2832); c.fill(); } });
+    var tag = n || sh; if (tag) { c.shadowBlur = 0; c.font = '11px "Share Tech Mono", monospace'; c.textAlign = 'left'; c.fillStyle = '#9dfff0'; c.fillText('BODY ' + (idx + 1), tag.x + size * 0.45, tag.y - size * 0.35); }
+    c.restore();
+  }
+  function slsLoop(ts) {
+    sls.raf = requestAnimationFrame(slsLoop);
+    var v = sls.video; if (!v || !v.videoWidth) return;
+    var cv = $('#sls-cv'), s = F.sizeCanvas(cv); if (!s) return;
+    var c = s.c, w = s.w, h = s.h, t = (ts - sls.t0) / 1000, vw = v.videoWidth, vh = v.videoHeight, sc = Math.max(w / vw, h / vh), dw = vw * sc, dh = vh * sc, dx = (w - dw) / 2, dy = (h - dh) / 2;
+    poseDetect(ts);
+    if (ts - sls.lastAn > 66) { sls.lastAn = ts; try { slsAnalyse(); } catch (e) { /* ignore a bad frame */ } }
+    c.drawImage(v, dx, dy, dw, dh);
+    c.fillStyle = sls.dots ? 'rgba(0,12,20,.35)' : 'rgba(0,0,0,0)'; c.fillRect(0, 0, w, h);
+    if (sls.dots) {
+      var step = Math.max(11, Math.round(Math.min(w, h) / 30)), gx, gy, sx, sy, m, r;
+      c.fillStyle = 'rgb(150,255,235)';
+      for (gy = step / 2; gy < h; gy += step) for (gx = step / 2 + ((gy / step | 0) % 2) * step / 2; gx < w; gx += step) {
+        sx = ((gx - dx) / sc) / vw * SW | 0; sy = ((gy - dy) / sc) / vh * SH | 0;
+        m = (sx >= 0 && sx < SW && sy >= 0 && sy < SH && sls.mm) ? sls.mm[sy * SW + sx] : 0;
+        r = 0.9 + m * 2.4 + 0.25 * Math.sin(t * 2 + gx * 0.05 + gy * 0.07);
+        c.globalAlpha = 0.28 + Math.min(0.7, m * 0.9); c.fillRect(gx - r / 2, gy - r / 2, r, r);
+      }
+      c.globalAlpha = 1;
+    }
+    var b = sls.box, fig = false, bx = null, bodies = (sls.track && sls.pstate === 'ready') ? sls.poses.length : 0, tracker = sls.track && sls.pstate === 'ready';
+    if (b) { bx = { x: dx + (b.x0 / SW * vw) * sc, y: dy + (b.y0 / SH * vh) * sc, w: ((b.x1 - b.x0) / SW * vw) * sc, h: ((b.y1 - b.y0) / SH * vh) * sc }; fig = !tracker && sls.seen >= 6 && bx.h / bx.w >= (sls.wasFig ? 0.95 : 1.25); }
+    if (b && sls.seen >= 3 && !tracker) {
+      c.strokeStyle = 'rgba(157,255,240,.55)'; c.lineWidth = 1; c.setLineDash([6, 5]); c.strokeRect(bx.x, bx.y, bx.w, bx.h); c.setLineDash([]);
+      if (fig && sls.fig) slsSkeleton(c, bx, t);
+    }
+    if (bodies && sls.fig) sls.poses.forEach(function (lm, i) { slsBody(c, lm, function (q) { return { x: dx + q.x * vw * sc, y: dy + q.y * vh * sc }; }, i); });
+    fig = fig || bodies > 0;
+    if (fig && !sls.wasFig) { sls.acq++; }
+    sls.wasFig = fig;
+    /* readout */
+    c.font = '12px "Share Tech Mono", monospace'; c.fillStyle = '#9dfff0'; c.textAlign = 'left';
+    c.fillText('SLS  ' + (tracker ? 'BODIES ' + bodies : 'MOTION ' + Math.round(Math.min(1, sls.frac * 4) * 100) + '%') + '  ACQ ' + sls.acq, 16, 76);
+    c.fillText(new Date().toLocaleTimeString(), 16, 92);
+    if (sls.shake > 0 && !tracker) { c.textAlign = 'center'; c.fillStyle = '#ffd48a'; c.fillText('HOLD STEADY', w / 2, h / 2); }
+    c.strokeStyle = 'rgba(157,255,240,.5)'; c.lineWidth = 1.5; var L = 22, mg = 12;
+    [[mg, mg, 1, 1], [w - mg, mg, -1, 1], [mg, h - mg, 1, -1], [w - mg, h - mg, -1, -1]].forEach(function (q) { c.beginPath(); c.moveTo(q[0], q[1] + q[3] * L); c.lineTo(q[0], q[1]); c.lineTo(q[0] + q[2] * L, q[1]); c.stroke(); });
+    slsStatus(tracker ? (bodies ? 'Body x' + bodies : 'Tracking') : sls.shake > 0 ? 'Hold steady' : fig ? 'Figure' : (b && sls.seen >= 3) ? 'Motion' : 'Scanning');
+  }
+  $('#sls-dots').addEventListener('click', function () { sls.dots = !sls.dots; this.setAttribute('aria-pressed', String(sls.dots)); });
+  $('#sls-track').addEventListener('click', function () { sls.track = !sls.track; this.setAttribute('aria-pressed', String(sls.track)); if (sls.track) loadPose(); else slsMsg(''); });
+  $('#sls-fig').addEventListener('click', function () { sls.fig = !sls.fig; this.setAttribute('aria-pressed', String(sls.fig)); });
+  $('#sls-sens').addEventListener('input', function (e) { sls.sens = +e.target.value; });
+  $('#sls-flip').addEventListener('click', function () { sls.facing = sls.facing === 'environment' ? 'user' : 'environment'; startSls(); });
+  $('#sls-snap').addEventListener('click', function () {
+    var cv = $('#sls-cv'); if (!sls.video) return;
+    cv.toBlob(function (blob) { if (!blob) return; var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = 'ghostquest-sls-' + Date.now() + '.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Snapshot saved to your downloads.'); }, 'image/png');
+  });
+  $('#sls-log').addEventListener('click', function () {
+    var at = tstr(Date.now()) + (gs ? ' · session ' + fmt((Date.now() - gs.start) / 1000) : '');
+    if (gs) addEvent('SLS sighting logged'); S.notes.unshift({ ts: Date.now(), at: at, text: 'SLS camera: sighting logged (' + sls.acq + ' figure acquisition' + (sls.acq === 1 ? '' : 's') + ' so far).' }); S.notes = S.notes.slice(0, 100); save(); toast('Sighting logged in your notes.');
   });
 
   /* ---------- COLLECTION ---------- */
@@ -1263,19 +2247,20 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
       return '<div class="qrow' + (done ? ' done' : '') + '"><span class="tick">' + (done ? '<svg class="i"><use href="#i-check"/></svg>' : '') + '</span><div style="flex:1;min-width:0">' + esc(q.label) + '<div class="cap">' + (done ? 'Done' : n + ' / ' + q.need) + '</div></div><span class="mono small">+' + q.xp + ' XP</span></div>';
     }).join('');
     $$('#col-filter .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.f === filter)); });
+    var where = { explore: 'Found while exploring.', ghost: 'Found while ghost hunting.', evp: 'Found by recording EVPs.' };
     $('#col-grid').innerHTML = all.filter(function (c) { return filter === 'all' || c.kind === filter; }).map(function (c) {
       var n = owned[c.id] || 0;
-      if (!n) return '<div class="item locked"><div class="ico">' + icon(c.kind) + '</div><h4>Undiscovered</h4><span class="rar">' + cap(c.kind) + '</span><span class="small muted">' + (c.kind === 'badge' ? esc(c.blurb) : c.source === 'explore' ? 'Found while exploring.' : c.source === 'ghost' ? 'Found while ghost hunting.' : 'Found in either world.') + '</span></div>';
+      if (!n) return '<div class="item locked"><div class="ico">' + icon(c.kind) + '</div><h4>Undiscovered</h4><span class="rar">' + cap(c.kind) + '</span><span class="small muted">' + (c.kind === 'badge' ? esc(c.blurb) : where[c.source] || 'Found in any world.') + '</span></div>';
       return '<div class="item ' + rar(c.rarity) + '">' + (n > 1 ? '<span class="cnt">x' + n + '</span>' : '') + '<div class="ico">' + icon(c.kind) + '</div><h4>' + esc(c.name) + '</h4><span class="rar">' + c.rarity + ' ' + c.kind + '</span><span class="small muted">' + esc(c.blurb) + '</span><button class="chip" data-share="' + c.id + '" style="align-self:flex-start;margin-top:4px;min-height:36px">Share</button></div>';
     }).join('');
+    var tag = { ghost: 'Ghost', evp: 'EVP', explore: 'Explore' };
     $('#history').innerHTML = S.discoveries.length ? S.discoveries.slice(0, 15).map(function (x) {
-      return '<div class="hrow"><span class="mono muted">' + esc(new Date(x.ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })) + '</span><strong>' + esc(x.title) + '</strong><span class="tagm">' + (x.mode === 'ghost' ? 'Ghost' : 'Explore') + '</span>' + (x.demo ? '<span class="tagm demo">Demo</span>' : '') + '</div>';
+      return '<div class="hrow"><span class="mono muted">' + esc(tstr(x.ts)) + '</span><strong>' + esc(x.title) + '</strong><span class="tagm">' + (tag[x.mode] || 'Explore') + '</span>' + (x.demo ? '<span class="tagm demo">Demo</span>' : '') + '</div>';
     }).join('') : '<span class="muted">No discoveries yet. Enter either world to find your first.</span>';
   }
   $('#col-filter').addEventListener('click', function (e) { var c = e.target.closest('.chip'); if (!c) return; filter = c.dataset.f; renderCollection(); });
-  function copyText(text, done) {
-    var ok = function () { toast('Copied to clipboard.'); };
-    var fail = function () { showShare(text); };
+  function copyText(text) {
+    var ok = function () { toast('Copied to clipboard.'); }, fail = function () { showShare(text); };
     try { navigator.clipboard.writeText(text).then(ok, fail); } catch (e) { fail(); }
   }
   function showShare(text) {
@@ -1287,8 +2272,8 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     if (e.target.closest('[data-close]')) closeModal();
   });
 
-  /* ---------- reveal ---------- */
-  function closeModal() { $('#modal').classList.remove('show'); $('#modal').innerHTML = ''; }
+  /* ---------- reveal + welcome ---------- */
+  function closeModal() { var m = $('#modal'); m.classList.remove('show'); m.innerHTML = ''; delete m.dataset.lock; }
   function reveal(res, roll, note) {
     var parts = [];
     if (roll) {
@@ -1297,29 +2282,44 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     } else parts.push('<div class="reveal"><h3>Well done</h3>');
     if (res.levelUp) parts.push('<p class="mono" style="color:var(--cyan)">Level ' + res.levelUp + ' reached</p>');
     (res.newBadges || []).forEach(function (b) { parts.push('<p class="small"><strong>Badge earned:</strong> ' + esc(b.name) + '</p>'); });
-    var shareId = roll ? roll.item.id : '';
-    parts.push('<div class="btns" style="justify-content:center;margin-top:14px">' + (shareId ? '<button class="btn" data-share="' + shareId + '">Share</button>' : '') + '<button class="btn primary" data-close>Continue</button></div></div>');
+    parts.push('<div class="btns" style="justify-content:center;margin-top:14px">' + (roll ? '<button class="btn" data-share="' + roll.item.id + '">Share</button>' : '') + '<button class="btn primary" data-close>Continue</button></div></div>');
     var m = $('#modal'); m.innerHTML = parts.join(''); m.classList.add('show');
     var b = $('[data-close]', m); if (b) b.focus();
   }
+  function showWelcome() {
+    var m = $('#modal'); m.dataset.lock = '1';
+    m.innerHTML = '<div class="welcome"><h3>Before you enter</h3>' +
+      '<p>GhostQuest is a game. Please play it safely.</p><ul class="small">' +
+      '<li><strong>The ghost tools are entertainment.</strong> A phone cannot detect spirits. Readings and voices are for atmosphere, and what you hear in a recording is up to you.</li>' +
+      '<li><strong>Marks are random points, not safe places.</strong> Look at the map first. Stay on public ground, keep off roads, railways and water, obey the law, never enter private or unsafe places, and watch the traffic, not your screen. Cancel and walk home any time.</li>' +
+      '<li><strong>Your data stays on this device.</strong> Location and the microphone are used only when you ask, and nothing is uploaded.</li></ul>' +
+      '<div class="btns" style="justify-content:center"><button class="btn primary" id="btn-accept">I understand. Enter.</button></div></div>';
+    m.classList.add('show'); setTimeout(function () { var b = $('#btn-accept'); if (b) b.focus(); }, 50);
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('#btn-accept')) { try { localStorage.setItem(OKKEY, '1'); } catch (x) { /* ignore */ } closeModal(); }
+  });
+  $('#btn-welcome').addEventListener('click', showWelcome);
 
   /* ---------- SETTINGS ---------- */
   function renderSettings() {
     var L = G.levelFromXp(S.xp), owned = G.COLLECTIBLES.filter(function (c) { return S.collection[c.id]; }).length;
     $('#s-lvl').textContent = L.level; $('#s-xp').textContent = S.xp + ' XP'; $('#s-col').textContent = owned + ' / ' + G.COLLECTIBLES.length; $('#s-dis').textContent = S.discoveries.length;
     $('#s-store').textContent = storeOk ? 'Saved on this device in this browser.' : 'Saving is blocked in this view, so progress lasts only until you close the page.';
-    $('#reset-row').innerHTML = '<button class="btn danger" id="btn-reset">Reset progress</button>';
+    $('#reset-row').innerHTML = '<button class="btn danger" id="btn-reset">Reset everything</button>';
   }
   document.addEventListener('click', function (e) {
-    if (e.target.closest('#btn-reset')) { $('#reset-row').innerHTML = '<button class="btn danger" id="btn-reset-yes">Yes, delete everything</button><button class="btn" id="btn-reset-no">Keep my progress</button>'; }
+    if (e.target.closest('#btn-reset')) $('#reset-row').innerHTML = '<button class="btn danger" id="btn-reset-yes">Yes, delete everything</button><button class="btn" id="btn-reset-no">Keep my progress</button>';
     else if (e.target.closest('#btn-reset-no')) renderSettings();
-    else if (e.target.closest('#btn-reset-yes')) { S = G.defaultState(); sessionOrigin = null; gs = null; ghostPause(); save(); refreshHud(); renderSettings(); toast('Progress reset.'); }
+    else if (e.target.closest('#btn-reset-yes')) {
+      stopWatch(); stopPlay(); S = G.defaultState(); gs = null; geo = null; ghostPause(); A.store.clear().catch(function () { /* ignore */ }); save(); refreshHud(); renderSettings(); toast('Everything was deleted from this device.');
+    }
   });
-
+  $('#btn-forget').addEventListener('click', function () { stopWatch(); S.origin = null; S.quest = { status: 'idle', dest: null, radiusM: S.settings.radiusM }; geo = null; save(); toast('Start point and target forgotten.'); });
   function applyPhone() {
     document.body.classList.toggle('phone', !!S.settings.phone);
     var b = $('#btn-phone'); if (b) b.setAttribute('aria-pressed', String(!!S.settings.phone));
-    setTimeout(layout, 30);
+    setTimeout(function () { layout(); if (gmap) gmap.resize(); }, 30);
   }
   $('#btn-phone').addEventListener('click', function () { S.settings.phone = !S.settings.phone; save(); applyPhone(); });
 
@@ -1330,6 +2330,9 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     var sp = $('#splash'), hide = function () { sp.classList.add('gone'); };
     sp.addEventListener('click', hide); setTimeout(hide, reduced ? 500 : 1700);
     new ResizeObserver(layout).observe($('#stage'));
+    var ok = false; try { ok = localStorage.getItem(OKKEY) === '1'; } catch (e) { /* ignore */ }
+    if (!ok) setTimeout(showWelcome, 300);
+    window.__gq = { state: function () { return S; }, sls: function () { return { acq: sls.acq, seen: sls.seen, frac: sls.frac, box: sls.box, ui: sls.ui }; } };
   }
   boot();
 })();
