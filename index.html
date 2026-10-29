@@ -271,6 +271,22 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
 .heatbar i { flex: 1; height: 8px; border-radius: 3px; background: rgba(150, 190, 255, .14); }
 .heatbar i.on { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
 .heatbar i.on.h3 { background: #ffb066; box-shadow: 0 0 8px #ffb066; }
+#ghost-css-anchor {}
+.tabs { position: sticky; top: -16px; z-index: 5; padding: 8px 0; background: rgba(3, 6, 16, .96); }
+.tabpane { display: flex; flex-direction: column; gap: 16px; }
+.tabpane[hidden] { display: none !important; }
+.aiwrap { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+#ai-cv { width: 150px; height: 150px; flex: none; }
+.aitext { flex: 1; min-width: 180px; }
+.chgrid { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.chrow { display: grid; grid-template-columns: 7.5em 1fr 5.5em; align-items: center; gap: 8px; font-size: .8rem; }
+.chrow .nm { color: var(--mute); font-family: var(--font-data); letter-spacing: .04em; }
+.chrow .vl { text-align: right; font-family: var(--font-data); color: var(--ice); }
+.chrow .bar { margin: 0; }
+.chrow .bar > i { transition: width .15s; }
+#vib-cv, #snd-cv { width: 100%; height: 96px; display: block; }
+#pd-cv { width: 100%; height: 200px; display: block; border-radius: 12px; background: rgba(2, 5, 14, .6); border: 1px solid var(--line); }
+.sbword { min-height: 2.6rem; margin: 10px 0; text-align: center; font: 400 2rem/1.2 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: #ffe0b3; text-shadow: 0 0 18px rgba(255, 176, 102, .5); transition: opacity 1.8s; }
 </style></head><body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -428,47 +444,86 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     </div>
     <div class="pscroll"><div class="col">
       <div class="card">
-        <h3>Investigation</h3>
-        <div class="kv"><span>Session</span><span><span id="g-time">00:00</span> &middot; <span id="g-count">0</span> logged</span></div>
-        <div class="btns" style="margin-top:10px">
+        <div class="kv" style="padding-top:0"><span>Session</span><span><span id="g-time">00:00</span> &middot; <span id="g-count">0</span> logged</span></div>
+        <div class="btns" style="margin-top:8px">
           <button class="btn violet" id="btn-start">Start investigation</button>
           <button class="btn" id="btn-rec" disabled>Log a sighting</button>
           <button class="btn" id="btn-end" disabled>End</button>
+          <button class="btn primary" data-open="sls"><svg class="i"><use href="#i-cam"/></svg>SLS camera</button>
         </div>
         <p class="small" id="g-msg" role="status" style="margin-top:8px"></p>
       </div>
 
-      <div class="card">
-        <h3>SLS camera</h3>
-        <p class="small muted">Live camera with a dot projection and a figure fitted to motion in the picture.</p>
-        <div class="btns"><button class="btn primary" data-open="sls"><svg class="i"><use href="#i-cam"/></svg>Open SLS camera</button></div>
+      <div class="chips tabs" id="g-tabs" role="tablist" aria-label="Instruments">
+        <button class="chip" role="tab" data-tab="field" aria-pressed="true">Field</button>
+        <button class="chip" role="tab" data-tab="box" aria-pressed="false">Spirit box</button>
+        <button class="chip" role="tab" data-tab="evp" aria-pressed="false">EVP</button>
+        <button class="chip" role="tab" data-tab="log" aria-pressed="false">Log</button>
       </div>
 
-      <div class="card inst">
-        <div class="ihead"><h3>EMF</h3><span class="tag sim" id="emf-tag">SIM</span><span class="mono" id="emf-val">0.0 &micro;T</span></div>
-        <canvas id="emf-cv" role="img" aria-label="EMF gauge and trace"></canvas>
-      </div>
-
-      <div class="card inst">
-        <div class="ihead"><h3>Spirit box</h3><span class="tag sim">SIM</span><span class="mono" id="sb-freq">FM --.-</span></div>
-        <canvas id="sb-cv" role="img" aria-label="Radio scan display"></canvas>
-        <div class="btns" style="margin-top:10px"><button class="btn" id="btn-box" aria-pressed="false">Spirit box</button></div>
-      </div>
-
-      <div class="card inst">
-        <div class="ihead"><h3>Environment</h3><span class="tag real">REAL</span></div>
-        <div class="sensors">
-          <div><span class="cap">Audio level</span><b id="sv-audio">--</b></div>
-          <div><span class="cap">Motion</span><b id="sv-motion">--</b></div>
-          <div><span class="cap">Heading</span><b id="sv-head">--</b></div>
-          <div><span class="cap">Magnetic</span><b id="sv-mag">--</b></div>
+      <!-- FIELD -->
+      <div class="tabpane" id="tab-field">
+        <div class="card inst">
+          <div class="ihead"><h3>Presence index</h3><span class="tag real">LIVE</span></div>
+          <div class="aiwrap">
+            <canvas id="ai-cv" role="img" aria-label="Presence index gauge"></canvas>
+            <div class="aitext">
+              <p class="small" id="ai-status">Power up the instruments, then calibrate the room.</p>
+              <div class="btns"><button class="btn primary" id="btn-sens" aria-pressed="false">Power up instruments</button><button class="btn" id="btn-calib" disabled>Calibrate room</button></div>
+            </div>
+          </div>
+          <div id="ch-grid" class="chgrid"></div>
+          <p class="small muted" style="margin-top:8px">The index measures how far every live sensor drifts from this room's own baseline. Many sensors moving together raise it most.</p>
         </div>
-        <div class="btns" style="margin-top:10px"><button class="btn" id="btn-sens" aria-pressed="false">Enable sensors</button></div>
-        <p class="small muted" id="sens-msg" style="margin-top:8px">Readings come from your phone's own sensors. Where a phone has no magnetometer, the EMF display stays simulated and is marked SIM.</p>
+
+        <div class="card inst">
+          <div class="ihead"><h3>Field</h3><span class="tag sim" id="emf-tag">NO SENSOR</span><span class="mono" id="emf-val">--</span></div>
+          <canvas id="emf-cv" role="img" aria-label="Magnetic field gauge and trace"></canvas>
+          <p class="small muted" id="emf-note"></p>
+        </div>
+
+        <div class="card inst">
+          <div class="ihead"><h3>Tremor</h3><span class="tag real">REAL</span><span class="mono" id="vib-val">--</span></div>
+          <canvas id="vib-cv" role="img" aria-label="Vibration trace"></canvas>
+          <p class="small muted">Set the phone down on a surface. The accelerometer shows footsteps, knocks and rumbles.</p>
+        </div>
+
+        <div class="card inst">
+          <div class="ihead"><h3>Sound bands</h3><span class="tag real">REAL</span><span class="mono" id="snd-val">--</span></div>
+          <canvas id="snd-cv" role="img" aria-label="Sound level in four frequency bands"></canvas>
+          <p class="small muted">Deep (below 120 Hz), voice, high and ultra (above 16 kHz, if the microphone reaches).</p>
+        </div>
+
+        <div class="card inst">
+          <div class="ihead"><h3>Sky and light</h3><span class="tag real">REAL</span></div>
+          <div class="kv"><span>Moon</span><span id="sk-moon">--</span></div>
+          <div class="kv"><span>Hour</span><span id="sk-hour">--</span></div>
+          <div class="kv"><span>Light</span><span id="sk-light">--</span></div>
+        </div>
       </div>
 
-      <div class="card"><h3>Event log</h3><div id="ev-log" class="small"></div></div>
+      <!-- SPIRIT BOX -->
+      <div class="tabpane" id="tab-box" hidden>
+        <div class="card inst">
+          <div class="ihead"><h3>Spirit box</h3><span class="tag real">SENSOR-DRIVEN</span><span class="mono" id="sb-freq">FM --.-</span></div>
+          <canvas id="sb-cv" role="img" aria-label="Live audio spectrum of the room"></canvas>
+          <div class="sbword" id="sb-word" aria-live="polite">&nbsp;</div>
+          <div class="btns"><button class="btn violet" id="btn-box" aria-pressed="false">Start box</button><button class="btn" id="btn-ask">Ask the box</button></div>
+          <div class="chips" style="margin-top:10px"><button class="chip" id="sb-sound" aria-pressed="false">Static</button><button class="chip" id="sb-voice" aria-pressed="false">Voice</button></div>
+          <p class="small muted" style="margin-top:8px" id="sb-note">Words come from a fixed list, picked by random noise in your phone's sensors. The further the room drifts from its baseline, the more often the box speaks. Entertainment.</p>
+          <div id="sb-log" class="small" style="margin-top:8px"></div>
+        </div>
 
+        <div class="card inst">
+          <div class="ihead"><h3>Pendulum</h3><span class="tag real">MOTION</span><span class="mono" id="pd-ans">&nbsp;</span></div>
+          <canvas id="pd-cv" role="img" aria-label="A pendulum that swings with the movement of your hand"></canvas>
+          <p class="small muted">Hold the phone flat and as still as you can. Ask a yes or no question. Forward and back means yes, side to side means no, and a circle means unclear. Your own tiny hand movements drive it.</p>
+          <div class="btns"><button class="btn" id="pd-go">Start</button></div>
+        </div>
+      </div>
+
+      <!-- EVP -->
+      <div class="tabpane" id="tab-evp" hidden>
       <div class="card" id="rec-card">
         <h3>EVP recorder</h3>
         <p class="small muted">Record a quiet room, ask a question, leave gaps, then listen back with headphones. Tap Mark when something sounds odd.</p>
@@ -478,16 +533,22 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
           <button class="btn violet" id="rec-go"><svg class="i"><use href="#i-mic"/></svg>Record</button>
           <button class="btn" id="rec-mark" disabled>Mark moment</button>
         </div>
+        <div class="chips" style="margin-top:8px"><button class="chip" id="rec-auto" aria-pressed="true">Auto-mark sounds</button></div>
         <p class="small" id="rec-msg" role="status" style="margin-top:8px"></p>
         <h3 style="margin-top:14px">Your recordings</h3>
         <div id="clips"></div>
       </div>
 
+      </div>
+
+      <div class="tabpane" id="tab-log" hidden>
+        <div class="card"><h3>Event log</h3><div id="ev-log" class="small"></div></div>
       <div class="card">
         <h3>Investigation notes</h3>
         <textarea id="note-in" maxlength="400" placeholder="What did you notice?" aria-label="Investigation note"></textarea>
         <div class="btns" style="margin-top:10px"><button class="btn" id="btn-note">Save note</button></div>
         <div id="notes" style="margin-top:8px"></div>
+      </div>
       </div>
     </div></div>
   </section>
@@ -545,7 +606,8 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
         <p class="small">No account. Everything stays on this device: progress, notes, your start point and target, and your recordings. Nothing is uploaded.</p>
         <p class="small"><strong>Location</strong> is asked for only when you tap My location or start a hunt. Discoveries keep only a position rounded to about 100 m.</p>
         <p class="small"><strong>Camera</strong> is used only while the SLS camera is open. Frames are analysed on the device and are never stored or uploaded unless you tap Snapshot.</p>
-        <p class="small"><strong>Microphone</strong> is used only while you record or while Sensors are on (a volume reading, nothing is recorded). Recordings are saved in this browser and can be deleted any time.</p>
+        <p class="small"><strong>Instruments</strong> (microphone level, motion, compass, magnetic field, light) are read only while powered up and are analysed on the device. Nothing is recorded or uploaded unless you use the EVP recorder.</p>
+        <p class="small"><strong>Microphone recordings</strong> happen only while you record. Recordings are saved in this browser and can be deleted any time.</p>
         <p class="small"><strong>Body tracking</strong> runs on your device. The first time, the tracker files (about 15 MB) are fetched from jsDelivr and Google storage, which see your IP address as any download does; the video never leaves the phone.</p>
         <p class="small"><strong>Maps</strong> load tiles from OpenStreetMap, which sees the tiles your phone asks for. Visited tiles are cached for offline use.</p>
         <p class="small"><strong>Streaming?</strong> Keep your live position off screen.</p>
@@ -911,6 +973,74 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     return fresh;
   }
 
+  /* ---------- instruments: pure maths (no browser needed, so it can be tested) ---------- */
+  var SYNODIC = 29.530588853, NEW_MOON_MS = Date.UTC(2000, 0, 6, 18, 14);
+  var MOON_NAMES = ['New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'];
+  function moonPhase(date) {
+    var days = (date.getTime() - NEW_MOON_MS) / 86400000, age = ((days % SYNODIC) + SYNODIC) % SYNODIC, frac = age / SYNODIC;
+    return { age: age, fraction: frac, illumination: (1 - Math.cos(2 * Math.PI * frac)) / 2, name: MOON_NAMES[Math.floor(frac * 8 + 0.5) % 8] };
+  }
+  /* running statistics (Welford) for a room baseline */
+  function statNew() { return { n: 0, mean: 0, m2: 0 }; }
+  function statAdd(s, x) { s.n++; var d = x - s.mean; s.mean += d / s.n; s.m2 += d * (x - s.mean); }
+  function statStd(s, floor) { return Math.max(floor || 0, s.n > 1 ? Math.sqrt(s.m2 / (s.n - 1)) : 0); }
+  function zscore(x, s, floor) { return (x - s.mean) / (statStd(s, floor) || 1); }
+  /* Presence index 0..100 from the absolute z-scores of every channel that has a baseline.
+     One loud channel alone is capped (a bump on the table); agreement between channels counts for more. */
+  function anomalyIndex(zs) {
+    var list = zs.filter(function (z) { return typeof z === 'number' && isFinite(z); }).map(Math.abs);
+    if (!list.length) return 0;
+    var sq = 0, multi = 0; list.forEach(function (z) { var c = Math.min(z, 6); sq += c * c; if (z > 2.5) multi++; });
+    var rms = Math.sqrt(sq / list.length);
+    return Math.round(clamp(rms / 5, 0, 1) * 100 * (multi >= 2 ? 1 : 0.6));
+  }
+  /* entropy pool: mixes the unpredictable low digits of real sensor readings */
+  function poolNew() { return { h: 0x811c9dc5 >>> 0, n: 0 }; }
+  function poolMix(p, x) {
+    var v = (Math.abs(+x) * 1e6) >>> 0;
+    p.h = (p.h ^ (v & 0xffff)) >>> 0; p.h = Math.imul(p.h, 16777619) >>> 0; p.h = (p.h ^ (p.h >>> 13)) >>> 0; p.n++;
+  }
+  function poolDraw(p) {
+    var x = p.h || 1; x ^= x << 13; x >>>= 0; x ^= x >>> 17; x >>>= 0; x ^= x << 5; x >>>= 0; p.h = x; return x / 4294967296;
+  }
+  var SPIRIT_WORDS = [
+    'here', 'near', 'behind', 'listen', 'wait', 'stay', 'follow', 'watching', 'waiting', 'remember', 'forgotten', 'alone',
+    'hollow', 'gate', 'stairs', 'cellar', 'garden', 'bridge', 'window', 'door', 'attic', 'well', 'chapel', 'orchard',
+    'candle', 'lantern', 'shadow', 'ember', 'mirror', 'moon', 'frost', 'mist',
+    'midnight', 'yesterday', 'always', 'winter', 'autumn', 'dusk', 'before', 'again',
+    'north', 'south', 'east', 'west', 'above', 'below', 'inside', 'outside',
+    'key', 'letter', 'bell', 'clock', 'ring', 'book', 'stone', 'water',
+    'Anna', 'Elias', 'Margaret', 'Thomas', 'Clara', 'Henry', 'Rose', 'Walter'
+  ];
+  function pickWord(u, last) {
+    var i = Math.floor(u * SPIRIT_WORDS.length) % SPIRIT_WORDS.length;
+    if (SPIRIT_WORDS[i] === last) i = (i + 1) % SPIRIT_WORDS.length;
+    return SPIRIT_WORDS[i];
+  }
+  /* chance that the box speaks within dtSec: rare when the room is calm, more likely as the presence index rises */
+  function oracleChance(index, dtSec) {
+    var r = clamp(index, 0, 100) / 100, rate = 0.015 + 0.3 * r * r;
+    return 1 - Math.exp(-rate * dtSec);
+  }
+  /* pendulum: a damped pendulum nudged by real hand movement */
+  function pendulumStep(st, ax, ay, dt) {
+    var k = 16, c = 2.4, gain = 0.5, sx = st.x, sy = st.y;
+    var fx = -k * sx - c * st.vx + gain * ax, fy = -k * sy - c * st.vy + gain * ay;
+    var vx = st.vx + fx * dt, vy = st.vy + fy * dt;
+    return { x: clamp(sx + vx * dt, -1, 1), y: clamp(sy + vy * dt, -1, 1), vx: vx, vy: vy };
+  }
+  /* reads a swing history: forward/back = yes, side to side = no, otherwise circle or still */
+  function pendulumAnswer(hist) {
+    if (hist.length < 10) return 'still';
+    var mx = 0, my = 0, i; hist.forEach(function (p) { mx += p.x; my += p.y; }); mx /= hist.length; my /= hist.length;
+    var vx = 0, vy = 0, cxy = 0; hist.forEach(function (p) { vx += (p.x - mx) * (p.x - mx); vy += (p.y - my) * (p.y - my); cxy += (p.x - mx) * (p.y - my); });
+    vx /= hist.length; vy /= hist.length; cxy /= hist.length;
+    var amp = Math.sqrt(vx + vy); if (amp < 0.06) return 'still';
+    var corr = Math.abs(cxy) / (Math.sqrt(vx * vy) || 1);
+    if (corr < 0.45 && Math.min(vx, vy) / Math.max(vx, vy) > 0.5) return 'circle';
+    return vy > vx ? 'yes' : 'no';
+  }
+
   /* ---------- events ---------- */
   var BASE_XP = { explore: 60, exploreDemo: 20, ghost: 25, evp: 30 };
   function recordGenerate(state, now) {
@@ -1003,6 +1133,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     badgeRules: badgeRules, awardBadges: awardBadges, recordGenerate: recordGenerate, recordFind: recordFind, finishSession: finishSession,
     shareText: shareText, clone: clone,
     project: project, unproject: unproject, metersPerPixel: metersPerPixel, circlePoints: circlePoints, fitView: fitView,
+    moonPhase: moonPhase, statNew: statNew, statAdd: statAdd, statStd: statStd, zscore: zscore, anomalyIndex: anomalyIndex, poolNew: poolNew, poolMix: poolMix, poolDraw: poolDraw, SPIRIT_WORDS: SPIRIT_WORDS, pickWord: pickWord, oracleChance: oracleChance, pendulumStep: pendulumStep, pendulumAnswer: pendulumAnswer,
     heat: heat, arrowAngle: arrowAngle, addClip: addClip, evpCheck: evpCheck, claimEvp: claimEvp,
     FIGURE_COLORS: FIGURE_COLORS, FIGURE_HATS: FIGURE_HATS, validCoord: validCoord,
     LIMITS: { MAX_CLIPS: MAX_CLIPS, MAX_CLIP_SEC: MAX_CLIP_SEC, EVP_MIN_SEC: EVP_MIN_SEC, EVP_DAILY_CAP: EVP_DAILY_CAP }
@@ -1381,6 +1512,112 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   root.GQAudio = { supported: supported, store: store, startRecording: startRecording, play: play, stopPlayback: stopPlayback, setEnhance: setEnhance, boxStart: boxStart, boxStop: boxStop, boxBurst: boxBurst, isBoxOn: function () { return !!box; } };
 })(typeof self !== 'undefined' ? self : this);
 
+/* GhostQuest sensor hub: turns the phone's real sensors into one set of channels,
+   learns a baseline for the room, and feeds the presence index and the word box.
+   Everything stays on the device. */
+(function (root) {
+  'use strict';
+  var G = root.GQ;
+  var FLOORS = { mag: 0.15, drift: 0.6, vib: 0.03, rot: 0.8, level: 2.5, deep: 3, voice: 3, high: 3, ultra: 3, light: 0.03 };
+  var hub = {
+    on: false, caps: { mic: false, motion: false, orient: false, mag: false, light: false },
+    ch: {}, snap: {}, z: {}, index: 0, base: null, calib: null, tick: null, listeners: [], pool: G.poolNew(),
+    heading: null, tilt: { beta: 0, gamma: 0 }, acc: { x: 0, y: 0 }, bands: new Float32Array(0), magSrc: null
+  };
+  var st = { stream: null, ac: null, an: null, td: null, fd: null, timer: 0, magS: null, lightS: null, hist: [], vb: null, vib: 0, rot: 0, rawAcc: [0, 0, 0], lpAcc: null, magRaw: null, magBase: null, mag: null, lightVal: null, lightSrc: null, camLuma: null };
+  var CH = ['mag', 'drift', 'vib', 'rot', 'level', 'deep', 'voice', 'high', 'ultra', 'light'];
+
+  function onMotion(e) {
+    var a = e.acceleration && e.acceleration.x != null ? e.acceleration : null, g = e.accelerationIncludingGravity;
+    var x, y, z;
+    if (a) { x = a.x; y = a.y; z = a.z; }
+    else if (g && g.x != null) { if (!st.lpAcc) st.lpAcc = [g.x, g.y, g.z]; st.lpAcc = [st.lpAcc[0] * 0.9 + g.x * 0.1, st.lpAcc[1] * 0.9 + g.y * 0.1, st.lpAcc[2] * 0.9 + g.z * 0.1]; x = g.x - st.lpAcc[0]; y = g.y - st.lpAcc[1]; z = g.z - st.lpAcc[2]; }
+    else return;
+    hub.caps.motion = true; st.rawAcc = [x, y, z]; hub.acc = { x: x, y: y };
+    var m = Math.sqrt(x * x + y * y + z * z); st.vib = st.vib * 0.7 + m * 0.3;
+    var r = e.rotationRate; if (r && r.alpha != null) st.rot = st.rot * 0.7 + Math.sqrt(r.alpha * r.alpha + r.beta * r.beta + r.gamma * r.gamma) * 0.3;
+    G.poolMix(hub.pool, x * 1000 + y * 100 + z);
+  }
+  function onOrient(e) {
+    var h = typeof e.webkitCompassHeading === 'number' ? e.webkitCompassHeading : (e.absolute && typeof e.alpha === 'number' ? (360 - e.alpha) % 360 : null);
+    if (typeof e.beta === 'number') { hub.tilt = { beta: e.beta, gamma: e.gamma }; hub.caps.orient = true; }
+    if (h != null) { hub.heading = h; st.hist.push(h); if (st.hist.length > 20) st.hist.shift(); }
+  }
+  function drift() {
+    if (st.hist.length < 8) return null;
+    var sx = 0, sy = 0; st.hist.forEach(function (h) { sx += Math.cos(h * Math.PI / 180); sy += Math.sin(h * Math.PI / 180); });
+    var R = Math.sqrt(sx * sx + sy * sy) / st.hist.length;           /* circular spread of the compass heading */
+    return Math.sqrt(Math.max(0, -2 * Math.log(Math.max(R, 1e-9)))) * 180 / Math.PI;
+  }
+  function band(lo, hi) {
+    var sr = st.ac.sampleRate, n = st.fd.length, i0 = Math.max(0, Math.floor(lo / (sr / 2) * n)), i1 = Math.min(n - 1, Math.ceil(hi / (sr / 2) * n)), s = 0, c = 0, i;
+    for (i = i0; i <= i1; i++) { s += st.fd[i]; c++; }
+    return c ? s / c : -140;                                          /* mean dB in the band */
+  }
+  function readMic() {
+    if (!st.an) return;
+    st.an.getFloatTimeDomainData(st.td); st.an.getFloatFrequencyData(st.fd);
+    var s = 0, i; for (i = 0; i < st.td.length; i++) s += st.td[i] * st.td[i];
+    hub.snap.level = 20 * Math.log10(Math.sqrt(s / st.td.length) + 1e-6);
+    hub.snap.deep = band(20, 120); hub.snap.voice = band(300, 3400); hub.snap.high = band(6000, 12000); hub.snap.ultra = st.ac.sampleRate >= 40000 ? band(16000, 21000) : null;
+    for (i = 0; i < 6; i++) G.poolMix(hub.pool, st.td[(i * 331 + (hub.pool.n % 97)) % st.td.length] * 1e4);
+    hub.bands = st.fd;
+  }
+  function frame() {
+    var s = hub.snap;
+    s.mag = st.mag; s.drift = drift(); s.vib = hub.caps.motion ? st.vib : null; s.rot = hub.caps.motion ? st.rot : null; s.light = st.lightVal;
+    readMic();
+    G.poolMix(hub.pool, performance.now() * 997);
+    if (st.mag != null) G.poolMix(hub.pool, st.magRaw);
+    /* baseline */
+    if (hub.calib) {
+      CH.forEach(function (k) { if (typeof s[k] === 'number' && isFinite(s[k])) G.statAdd(hub.calib.stats[k] || (hub.calib.stats[k] = G.statNew()), s[k]); });
+      hub.calib.left -= 0.1; if (hub.calib.cb) hub.calib.cb(Math.max(0, hub.calib.left), hub.calib.total);
+      if (hub.calib.left <= 0) { hub.base = hub.calib.stats; var done = hub.calib.done; hub.calib = null; if (done) done(); }
+    }
+    var zs = [], k;
+    hub.z = {};
+    if (hub.base) for (k in hub.base) { var v = s[k]; if (hub.base[k].n > 20 && typeof v === 'number' && isFinite(v)) { var z = G.zscore(v, hub.base[k], FLOORS[k] || 0.1); hub.z[k] = z; zs.push(z); } }
+    hub.index = hub.base ? G.anomalyIndex(zs) : 0;
+    hub.listeners.forEach(function (f) { try { f(hub); } catch (e) { /* a listener must not break the hub */ } });
+  }
+
+  function start() {
+    if (hub.on) return Promise.resolve(hub.caps);
+    hub.on = true;
+    var ask = function (C) { return (C && typeof C.requestPermission === 'function') ? C.requestPermission().catch(function () { return 'denied'; }) : Promise.resolve('granted'); };
+    var p1 = ask(root.DeviceMotionEvent), p2 = ask(root.DeviceOrientationEvent);   /* both asked inside the same tap, as iOS requires */
+    var micP = (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }).then(function (stream) {
+      if (!hub.on) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      var AC = root.AudioContext || root.webkitAudioContext; if (!AC) return;
+      st.stream = stream; st.ac = new AC(); var src = st.ac.createMediaStreamSource(stream); st.an = st.ac.createAnalyser(); st.an.fftSize = 2048; st.an.smoothingTimeConstant = 0.6;
+      src.connect(st.an); st.td = new Float32Array(st.an.fftSize); st.fd = new Float32Array(st.an.frequencyBinCount); hub.caps.mic = true; if (st.ac.state === 'suspended') st.ac.resume();
+    }).catch(function () { /* no microphone: the audio channels stay off */ }) : Promise.resolve();
+    try {
+      if ('Magnetometer' in root) { var m = new root.Magnetometer({ frequency: 20 }); m.addEventListener('reading', function () { var mag = Math.sqrt(m.x * m.x + m.y * m.y + m.z * m.z); st.magRaw = mag; st.magBase = st.magBase == null ? mag : st.magBase * 0.995 + mag * 0.005; st.mag = Math.abs(mag - st.magBase); hub.caps.mag = true; hub.magSrc = 'magnetometer'; }); m.addEventListener('error', function () { /* sensor blocked */ }); m.start(); st.magS = m; }
+    } catch (e) { st.magS = null; }
+    try {
+      if ('AmbientLightSensor' in root) { var l = new root.AmbientLightSensor({ frequency: 5 }); l.addEventListener('reading', function () { st.lightVal = Math.log10(1 + l.illuminance) / 4; st.lightSrc = 'light sensor'; hub.caps.light = true; }); l.addEventListener('error', function () { /* blocked */ }); l.start(); st.lightS = l; }
+    } catch (e) { st.lightS = null; }
+    root.addEventListener('devicemotion', onMotion); root.addEventListener('deviceorientationabsolute', onOrient); root.addEventListener('deviceorientation', onOrient);
+    st.timer = root.setInterval(frame, 100);
+    return Promise.all([p1, p2, micP]).then(function () { return hub.caps; });
+  }
+  function stop() {
+    if (!hub.on) return; hub.on = false; root.clearInterval(st.timer);
+    root.removeEventListener('devicemotion', onMotion); root.removeEventListener('deviceorientationabsolute', onOrient); root.removeEventListener('deviceorientation', onOrient);
+    [st.magS, st.lightS].forEach(function (s) { if (s) { try { s.stop(); } catch (e) { /* ignore */ } } });
+    if (st.stream) st.stream.getTracks().forEach(function (t) { t.stop(); }); if (st.ac) { try { st.ac.close(); } catch (e) { /* ignore */ } }
+    st = { stream: null, ac: null, an: null, td: null, fd: null, timer: 0, magS: null, lightS: null, hist: [], vb: null, vib: 0, rot: 0, rawAcc: [0, 0, 0], lpAcc: null, magRaw: null, magBase: null, mag: null, lightVal: null, lightSrc: null, camLuma: null };
+    hub.caps = { mic: false, motion: false, orient: false, mag: false, light: false }; hub.snap = {}; hub.z = {}; hub.index = 0; hub.calib = null; hub.heading = null; hub.magSrc = null; hub.bands = new Float32Array(0);
+  }
+  function calibrate(sec, cb, done) { if (!hub.on) return false; hub.base = null; hub.calib = { stats: {}, left: sec, total: sec, cb: cb, done: done }; return true; }
+  function feedLight(v, src) { if (!hub.caps.light && v != null) { st.lightVal = v; st.lightSrc = src || 'camera'; } }
+  function draw() { return G.poolDraw(hub.pool); }
+
+  root.GQSense = { hub: hub, start: start, stop: stop, calibrate: calibrate, feedLight: feedLight, draw: draw, on: function (f) { hub.listeners.push(f); }, off: function (f) { hub.listeners = hub.listeners.filter(function (x) { return x !== f; }); }, lightSource: function () { return st.lightSrc; } };
+})(typeof self !== 'undefined' ? self : this);
+
 
 </script>
 <script>
@@ -1546,9 +1783,9 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     animUpdate();
   }
   function leavePanel(from, to) {
-    if (from === 'sls' && to !== 'sls') stopSls();
+    if (from === 'sls' && to !== 'sls') { stopSls(); if (to !== 'ghost') GQSense.stop(); }
     if (from === 'explore' && to !== 'explore') { stopWatch(); if (gmap) gmap.setActive(false); }
-    if (from === 'ghost' && to !== 'ghost') { ghostPause(); if (rec) stopRecording(); stopPlay(); A.boxStop(); boxOn = false; sensorsOff(); $('#btn-box').textContent = 'Spirit box'; $('#btn-box').setAttribute('aria-pressed', 'false'); }
+    if (from === 'ghost' && to !== 'ghost') { ghostPause(); if (rec) stopRecording(); stopPlay(); A.boxStop(); boxOn = false; pd.on = false; $('#pd-go').textContent = 'Start'; if (to !== 'sls') GQSense.stop(); $('#btn-box').textContent = 'Start box'; $('#btn-box').setAttribute('aria-pressed', 'false'); }
   }
   function goHome() {
     if (current === 'home') return;
@@ -1598,7 +1835,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     raf = requestAnimationFrame(frame);
     var t = (ts - t0) / 1000;
     if (current === 'explore') drawArrow();
-    else if (current === 'ghost') { readLevel(); drawEmf(); drawSb(); drawWave(); }
+    else if (current === 'ghost') { if (gtab === 'field') { drawAi(); drawEmf(); drawVib(); drawSnd(); } else if (gtab === 'box') { drawSb(); drawPend(); } else if (gtab === 'evp') drawWave(); }
   }
 
   /* ---------- EXPLORE: state helpers ---------- */
@@ -1829,98 +2066,111 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     c.beginPath(); c.moveTo(0, -34); c.lineTo(20, 18); c.lineTo(0, 8); c.lineTo(-20, 18); c.closePath(); c.fill(); c.restore();
   }
 
-  /* ---------- GHOST: instrument console ---------- */
-  var gs = null, gt = 0, boxOn = false, emf = 0.4, emfHist = [], MAX_REC = 5, sbWord = '', sbUntil = 0, sbFreq = 98.0, sbBins = [], evs = [], spikeAt = 0;
-  var sens = { on: false, stream: null, an: null, buf: null, ac: null, level: null, vib: 0, vbase: null, mag: null, mbase: null, motion: false, magSensor: null };
-  var WORDS = ['whisper', 'north', 'lantern', 'gate', 'cold', 'here', 'moon', 'behind', 'stay', 'open', 'key', 'hollow', 'echo', 'listen', 'water', 'stone'];
+  /* ---------- GHOST: instrument console (real sensors) ---------- */
+  var gs = null, gt = 0, boxOn = false, boxSound = false, boxVoice = false, MAX_REC = 5, sbWord = '', sbUntil = 0, sbLast = null, evs = [], spikeAt = 0, emfHist = [], vibHist = [], gtab = 'field';
+  var HUB = window.GQSense.hub;
+  var CHN = { mag: 'Field', drift: 'Compass drift', vib: 'Tremor', rot: 'Rotation', level: 'Sound level', deep: 'Deep band', voice: 'Voice band', high: 'High band', ultra: 'Ultra band', light: 'Light' };
+  var CHU = { mag: ' µT', drift: '°', vib: ' m/s²', rot: ' °/s', level: ' dB', deep: ' dB', voice: ' dB', high: ' dB', ultra: ' dB', light: '' };
   function addEvent(txt) { evs.unshift({ t: gs ? fmt((Date.now() - gs.start) / 1000) : tstr(Date.now()), txt: txt }); if (evs.length > 40) evs.pop(); renderEvents(); }
-  function renderEvents() { $('#ev-log').innerHTML = evs.length ? evs.slice(0, 10).map(function (e) { return '<div class="hrow"><span class="mono muted">' + esc(e.t) + '</span><span>' + esc(e.txt) + '</span></div>'; }).join('') : '<span class="muted small">Nothing logged yet.</span>'; }
+  function renderEvents() { $('#ev-log').innerHTML = evs.length ? evs.slice(0, 14).map(function (e) { return '<div class="hrow"><span class="mono muted">' + esc(e.t) + '</span><span>' + esc(e.txt) + '</span></div>'; }).join('') : '<span class="muted small">Nothing logged yet.</span>'; }
+  function showTab(n) {
+    gtab = n; $$('#g-tabs .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.tab === n)); });
+    ['field', 'box', 'evp', 'log'].forEach(function (k) { $('#tab-' + k).hidden = k !== n; });
+    if (n === 'evp') renderClips();
+  }
+  $('#g-tabs').addEventListener('click', function (e) { var c = e.target.closest('.chip'); if (c) showTab(c.dataset.tab); });
   function renderGhost() {
     var on = !!gs, st = $('#gstatus'); st.textContent = on ? 'Investigating' : 'Standby'; st.dataset.s = on ? 'navigating' : 'idle';
     $('#btn-start').disabled = on; $('#btn-end').disabled = !on; $('#btn-rec').disabled = !on;
     $('#g-count').textContent = gs ? gs.finds : 0; $('#g-time').textContent = gs ? fmt((Date.now() - gs.start) / 1000) : '00:00';
-    renderNotes(); renderClips(); renderRecUi(); renderEvents(); ghostRun();
+    renderNotes(); renderClips(); renderRecUi(); renderEvents(); renderSky(); renderSbLog(); hubUi();
+    clearInterval(gt); gt = setInterval(function () { if (gs) $('#g-time').textContent = fmt((Date.now() - gs.start) / 1000); renderSky(); }, 1000);
   }
   function renderNotes() {
     var list = S.notes.slice(0, 20);
     $('#notes').innerHTML = list.length ? list.map(function (n) { return '<div class="noteitem"><span class="cap">' + esc(n.at) + '</span><div>' + esc(n.text) + '</div></div>'; }).join('') : '<p class="small muted">No notes yet.</p>';
   }
-  function emfValue() { return sens.mag != null ? sens.mag : emf; }
-  function ghostRun() {
-    clearInterval(gt); var tick = 0;
-    gt = setInterval(function () {
-      tick++;
-      if (gs) $('#g-time').textContent = fmt((Date.now() - gs.start) / 1000);
-      if (sens.mag == null) { emf += (Math.random() - 0.5) * 0.35; if (Math.random() < 0.012) emf += 2.5 + Math.random() * 3; emf = Math.max(0.1, Math.min(9.5, emf * 0.97 + 0.012)); }
-      var v = emfValue(); emfHist.push(v); if (emfHist.length > 150) emfHist.shift();
-      var lim = sens.mag != null ? 6 : 5, now = Date.now();
-      if (gs && v > lim && now - spikeAt > 8000) { spikeAt = now; addEvent('EMF spike ' + v.toFixed(1) + ' µT' + (sens.mag != null ? '' : ' (simulated)')); }
-      $('#emf-val').textContent = v.toFixed(1) + ' µT'; $('#emf-tag').textContent = sens.mag != null ? 'REAL' : 'SIM'; $('#emf-tag').className = 'tag ' + (sens.mag != null ? 'real' : 'sim');
-      if (boxOn) {
-        sbFreq = 87.5 + ((sbFreq - 87.5 + 0.9 + Math.random() * 1.4) % 20.5);
-        $('#sb-freq').textContent = 'FM ' + sbFreq.toFixed(1);
-        if (tick % 22 === 0 && Math.random() < 0.8) { sbWord = WORDS[Math.floor(Math.random() * WORDS.length)]; sbUntil = performance.now() + 1800; if (gs) addEvent('Spirit box: "' + sbWord + '" (simulated)'); A.boxBurst(); }
-      }
-      if (sens.on) {
-        $('#sv-audio').textContent = sens.level == null ? '--' : sens.level.toFixed(0) + ' dBFS';
-        $('#sv-motion').textContent = sens.motion ? sens.vib.toFixed(2) + ' m/s²' : '--';
-        $('#sv-head').textContent = compass == null ? '--' : Math.round(compass) + '° ' + G.compassLabel(compass);
-        $('#sv-mag').textContent = sens.mag == null ? 'n/a' : sens.mag.toFixed(1) + ' µT';
-      }
-    }, 100);
+  function renderSky() {
+    var d = new Date(), m = G.moonPhase(d), h = d.getHours();
+    $('#sk-moon').textContent = m.name + ', ' + Math.round(m.illumination * 100) + '% lit';
+    $('#sk-hour').textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + (h < 3 ? 'Witching hour' : h < 6 ? 'Before dawn' : h < 18 ? 'Daylight' : h < 22 ? 'Dusk' : 'Night');
+    var l = HUB.snap.light; $('#sk-light').textContent = (typeof l === 'number') ? Math.round(l * 100) + '% (' + (GQSense.lightSource() || 'sensor') + ')' : (HUB.on ? 'Open the SLS camera or use a phone with a light sensor' : 'Instruments off');
   }
-  function ghostPause() { clearInterval(gt); gt = 0; }
-  function sensorsOn() {
-    if (sens.on) return; sens.on = true; var msg = $('#sens-msg'); msg.textContent = '';
-    $('#btn-sens').textContent = 'Sensors on'; $('#btn-sens').setAttribute('aria-pressed', 'true');
-    /* compass + motion (iOS asks once) */
-    var ask = function (C) { return (C && typeof C.requestPermission === 'function') ? C.requestPermission().catch(function () { return 'denied'; }) : Promise.resolve('granted'); };
-    ask(window.DeviceOrientationEvent).then(function (r) { if (r === 'granted') armCompass(); });
-    ask(window.DeviceMotionEvent).then(function (r) {
-      if (r !== 'granted') return;
-      window.addEventListener('devicemotion', onMotion);
+  function hubUi() {
+    $('#btn-sens').textContent = HUB.on ? 'Instruments on' : 'Power up instruments'; $('#btn-sens').setAttribute('aria-pressed', String(HUB.on));
+    $('#btn-calib').disabled = !HUB.on || !!HUB.calib;
+    var s = $('#ai-status');
+    if (!HUB.on) s.textContent = 'Power up the instruments, then calibrate the room.';
+    else if (HUB.calib) s.textContent = 'Calibrating. Keep still and quiet for ' + Math.ceil(HUB.calib.left) + ' s.';
+    else if (HUB.base) s.textContent = 'Baseline set. The index shows how far the room drifts from itself.';
+    else s.textContent = 'Instruments on. Tap Calibrate room to set the baseline.';
+  }
+  $('#btn-sens').addEventListener('click', function () {
+    if (HUB.on) { GQSense.stop(); hubUi(); renderChannels(); return; }
+    $('#ai-status').textContent = 'Starting sensors. Allow access when asked.';
+    GQSense.start().then(function (caps) {
+      var miss = []; if (!caps.mic) miss.push('microphone'); if (!caps.motion) miss.push('motion'); if (!caps.orient) miss.push('compass');
+      hubUi(); if (miss.length) toast('Not available or not allowed: ' + miss.join(', ') + '.');
     });
-    /* magnetometer (Chrome on Android) */
-    try { if ('Magnetometer' in window) { var m = new window.Magnetometer({ frequency: 10 }); m.addEventListener('reading', function () { var mag = Math.sqrt(m.x * m.x + m.y * m.y + m.z * m.z); sens.mbase = sens.mbase == null ? mag : sens.mbase * 0.995 + mag * 0.005; sens.mag = Math.abs(mag - sens.mbase); }); m.start(); sens.magSensor = m; } } catch (e) { sens.magSensor = null; }
-    /* microphone level */
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }).then(function (st) {
-        if (!sens.on) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
-        var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-        sens.stream = st; sens.ac = new AC(); var src = sens.ac.createMediaStreamSource(st); sens.an = sens.ac.createAnalyser(); sens.an.fftSize = 1024; src.connect(sens.an); sens.buf = new Float32Array(sens.an.fftSize);
-        if (sens.ac.state === 'suspended') sens.ac.resume();
-      }, function () { msg.textContent = 'Microphone not granted, so the audio level stays off.'; });
-    }
+    hubUi();
+  });
+  $('#btn-calib').addEventListener('click', function () {
+    GQSense.calibrate(15, function () { hubUi(); }, function () { hubUi(); toast('Room baseline set.'); if (gs) addEvent('Room calibrated'); });
+    hubUi();
+  });
+  function topChannel() { var best = null, bz = 0; for (var k in HUB.z) if (Math.abs(HUB.z[k]) > bz) { bz = Math.abs(HUB.z[k]); best = k; } return best; }
+  function renderChannels() {
+    var rows = '';
+    Object.keys(CHN).forEach(function (k) {
+      var v = HUB.snap[k]; if (typeof v !== 'number' || !isFinite(v)) return;
+      var z = HUB.z[k], w = z == null ? 0 : Math.min(1, Math.abs(z) / 6) * 100;
+      rows += '<div class="chrow"><span class="nm">' + CHN[k] + '</span><div class="bar"><i style="width:' + w + '%"></i></div><span class="vl">' + (k === 'light' ? Math.round(v * 100) + '%' : v.toFixed(k === 'mag' || k === 'vib' ? 2 : 1) + CHU[k]) + '</span></div>';
+    });
+    $('#ch-grid').innerHTML = rows || '<span class="small muted">No live readings yet.</span>';
   }
-  function onMotion(e) {
-    var a = e.accelerationIncludingGravity || e.acceleration; if (!a || a.x == null) return;
-    var m = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z); sens.motion = true;
-    sens.vbase = sens.vbase == null ? m : sens.vbase * 0.98 + m * 0.02; sens.vib = sens.vib * 0.8 + Math.abs(m - sens.vbase) * 0.2;
+  /* the hub ticks ten times a second */
+  var lastRows = 0, lastWord = 0;
+  GQSense.on(function (h) {
+    var s = h.snap, now = Date.now();
+    var emfv = s.mag != null ? s.mag : (s.drift != null ? s.drift : null);
+    emfHist.push(emfv == null ? 0 : emfv); if (emfHist.length > 150) emfHist.shift();
+    vibHist.push(s.vib == null ? 0 : s.vib); if (vibHist.length > 150) vibHist.shift();
+    if (current !== 'ghost') return;
+    $('#emf-tag').textContent = s.mag != null ? 'MAGNETOMETER' : s.drift != null ? 'COMPASS DRIFT' : 'NO SENSOR'; $('#emf-tag').className = 'tag ' + (emfv == null ? 'sim' : 'real');
+    $('#emf-val').textContent = emfv == null ? '--' : emfv.toFixed(s.mag != null ? 2 : 1) + (s.mag != null ? ' µT' : '°');
+    $('#emf-note').textContent = s.mag != null ? 'Change in the magnetic field around the phone, from its magnetometer.' : s.drift != null ? 'This phone has no magnetometer for web pages. The compass heading wobbles when metal or magnets are near, so its drift stands in for the field.' : 'Power up the instruments to read the field.';
+    $('#vib-val').textContent = s.vib == null ? '--' : s.vib.toFixed(2) + ' m/s²';
+    $('#snd-val').textContent = s.level == null ? '--' : s.level.toFixed(0) + ' dBFS';
+    if (now - lastRows > 250) { lastRows = now; renderChannels(); if (HUB.calib) hubUi(); }
+    /* presence index events */
+    if (gs && h.index >= 60 && now - spikeAt > 10000) { spikeAt = now; var tc = topChannel(); addEvent('Presence index ' + h.index + (tc ? ' (' + CHN[tc] + ')' : '')); try { if (navigator.vibrate) navigator.vibrate(70); } catch (e) { /* ignore */ } }
+    /* the box speaks by chance */
+    if (boxOn && now - lastWord > 4000 && GQSense.draw() < G.oracleChance(h.index, 0.1)) speak('chance');
+  });
+  function speak(why) {
+    var w = G.pickWord(GQSense.draw(), sbLast); sbLast = w; lastWord = Date.now();
+    sbWord = w; sbUntil = performance.now() + 5000; var el = $('#sb-word'); el.style.transition = 'none'; el.style.opacity = '1'; el.textContent = w;
+    setTimeout(function () { el.style.transition = 'opacity 2s'; el.style.opacity = '0.25'; }, 3000);
+    var tc = topChannel(); sbLog.unshift({ t: tstr(Date.now()), w: w, i: HUB.index, why: why }); if (sbLog.length > 30) sbLog.pop(); renderSbLog();
+    if (gs) addEvent('Spirit box: "' + w + '"' + (why === 'ask' ? ' (asked)' : ' (index ' + HUB.index + (tc ? ', ' + CHN[tc] : '') + ')'));
+    if (boxSound) A.boxBurst();
+    if (boxVoice && window.speechSynthesis) { try { var u = new SpeechSynthesisUtterance(w); u.rate = 0.7; u.pitch = 0.7; u.volume = 0.7; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); } catch (e) { /* ignore */ } }
   }
-  function sensorsOff() {
-    if (!sens.on) return; sens.on = false;
-    window.removeEventListener('devicemotion', onMotion);
-    if (sens.magSensor) { try { sens.magSensor.stop(); } catch (e) { /* ignore */ } sens.magSensor = null; }
-    if (sens.stream) sens.stream.getTracks().forEach(function (t) { t.stop(); }); if (sens.ac) { try { sens.ac.close(); } catch (e) { /* ignore */ } }
-    sens.stream = null; sens.ac = null; sens.an = null; sens.level = null; sens.mag = null; sens.mbase = null; sens.motion = false; sens.vbase = null; sens.vib = 0;
-    $('#btn-sens').textContent = 'Enable sensors'; $('#btn-sens').setAttribute('aria-pressed', 'false');
-    ['audio', 'motion', 'head', 'mag'].forEach(function (k) { $('#sv-' + k).textContent = '--'; });
-  }
-  $('#btn-sens').addEventListener('click', function () { if (sens.on) sensorsOff(); else sensorsOn(); });
-  function readLevel() {
-    if (!sens.an) return;
-    sens.an.getFloatTimeDomainData(sens.buf); var s = 0, i; for (i = 0; i < sens.buf.length; i++) s += sens.buf[i] * sens.buf[i];
-    var db = 20 * Math.log10(Math.sqrt(s / sens.buf.length) + 1e-6); sens.level = sens.level == null ? db : sens.level * 0.8 + db * 0.2;
-  }
+  var sbLog = [];
+  function renderSbLog() { $('#sb-log').innerHTML = sbLog.length ? sbLog.slice(0, 8).map(function (x) { return '<div class="hrow"><span class="mono muted">' + esc(x.t) + '</span><strong>' + esc(x.w) + '</strong><span class="tagm">' + (x.why === 'ask' ? 'asked' : 'index ' + x.i) + '</span></div>'; }).join('') : '<span class="muted">No words yet.</span>'; }
+  $('#btn-box').addEventListener('click', function () {
+    if (!boxOn && !HUB.on) { $('#sb-note').textContent = 'Power up the instruments first (Field tab). The box listens to the sensors.'; showTab('field'); return; }
+    boxOn = !boxOn; $('#btn-box').setAttribute('aria-pressed', String(boxOn)); $('#btn-box').textContent = boxOn ? 'Stop box' : 'Start box';
+    if (!boxOn) { A.boxStop(); $('#sb-freq').textContent = 'FM --.-'; } else if (boxSound) A.boxStart();
+  });
+  $('#btn-ask').addEventListener('click', function () { if (!HUB.on) { $('#sb-note').textContent = 'Power up the instruments first (Field tab).'; return; } speak('ask'); });
+  $('#sb-sound').addEventListener('click', function () { boxSound = !boxSound; this.setAttribute('aria-pressed', String(boxSound)); if (boxOn) { if (boxSound) A.boxStart(); else A.boxStop(); } });
+  $('#sb-voice').addEventListener('click', function () { boxVoice = !boxVoice; this.setAttribute('aria-pressed', String(boxVoice)); });
+  function ghostPause() { clearInterval(gt); gt = 0; }
 
   $('#btn-start').addEventListener('click', function () {
     gs = { start: Date.now(), finds: 0, lastRec: 0 }; evs = []; spikeAt = 0;
-    $('#g-msg').textContent = 'Investigation running. Events are logged below.'; addEvent('Investigation started'); renderGhost();
-  });
-  $('#btn-box').addEventListener('click', function () {
-    boxOn = !boxOn; $('#btn-box').setAttribute('aria-pressed', String(boxOn));
-    if (boxOn) A.boxStart(); else { A.boxStop(); $('#sb-freq').textContent = 'FM --.-'; }
-    $('#btn-box').textContent = boxOn ? 'Spirit box: on' : 'Spirit box';
+    $('#g-msg').textContent = 'Investigation running. Events are logged in the Log tab.'; addEvent('Investigation started'); renderGhost();
   });
   $('#btn-rec').addEventListener('click', function () {
     if (!gs) return;
@@ -1948,33 +2198,70 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     save(); $('#note-in').value = ''; renderNotes(); toast('Note saved on this device.');
   });
 
-  /* EMF gauge + trace */
+  /* ----- drawing ----- */
+  function grid(c, w, h) { c.strokeStyle = 'rgba(130,190,255,.14)'; c.lineWidth = 1; c.strokeRect(0.5, 0.5, w - 1, h - 1); c.beginPath(); c.moveTo(0, h / 2); c.lineTo(w, h / 2); c.stroke(); }
+  function trace(c, hist, w, h, max, col) {
+    if (hist.length < 2) return; c.strokeStyle = col; c.lineWidth = 1.5; c.beginPath();
+    hist.forEach(function (e, k) { var x = k / 149 * w, y = h - 6 - Math.min(1, e / max) * (h - 12); if (k) c.lineTo(x, y); else c.moveTo(x, y); }); c.stroke();
+  }
+  function drawAi() {
+    var cv = $('#ai-cv'), s = F.sizeCanvas(cv); if (!s) return; var c = s.c, w = s.w, cx = w / 2, R = w / 2 - 12, idx = HUB.on ? HUB.index : 0;
+    c.clearRect(0, 0, w, w); c.lineWidth = 9; c.lineCap = 'round'; c.strokeStyle = 'rgba(130,190,255,.15)'; c.beginPath(); c.arc(cx, cx, R, Math.PI * 0.75, Math.PI * 2.25); c.stroke();
+    var f = idx / 100, col = idx < 40 ? '#47d3ff' : idx < 70 ? '#9677ff' : '#ffc27a'; c.strokeStyle = col; c.shadowColor = col; c.shadowBlur = 12;
+    if (f > 0.005) { c.beginPath(); c.arc(cx, cx, R, Math.PI * 0.75, Math.PI * (0.75 + 1.5 * f)); c.stroke(); } c.shadowBlur = 0;
+    c.fillStyle = '#e9f3ff'; c.textAlign = 'center'; c.font = '34px "Share Tech Mono", monospace'; c.fillText(HUB.base ? String(idx) : '--', cx, cx + 8);
+    c.font = '10px "Share Tech Mono", monospace'; c.fillStyle = 'rgba(191,234,255,.7)'; c.fillText(HUB.base ? 'PRESENCE' : HUB.calib ? 'CALIBRATING' : 'NO BASELINE', cx, cx + 28);
+  }
   function drawEmf() {
-    var cv = $('#emf-cv'), s = F.sizeCanvas(cv); if (!s) return;
-    var c = s.c, w = s.w, h = s.h, real = sens.mag != null, max = real ? 20 : 10, v = Math.min(max, emfValue()), gw = Math.min(h * 1.5, w * 0.45), cx = gw / 2 + 6, cy = h - 18, R = gw / 2 - 8;
-    c.clearRect(0, 0, w, h);
-    c.lineWidth = 1; c.strokeStyle = 'rgba(130,190,255,.35)'; c.fillStyle = 'rgba(191,234,255,.8)'; c.font = '10px "Share Tech Mono", monospace'; c.textAlign = 'center';
+    var cv = $('#emf-cv'), s = F.sizeCanvas(cv); if (!s) return; var c = s.c, w = s.w, h = s.h, real = HUB.snap.mag != null, max = real ? 10 : 15, v = Math.min(max, emfHist[emfHist.length - 1] || 0), gw = Math.min(h * 1.5, w * 0.45), cx = gw / 2 + 6, cy = h - 18, R = gw / 2 - 8;
+    c.clearRect(0, 0, w, h); c.lineWidth = 1; c.strokeStyle = 'rgba(130,190,255,.35)'; c.fillStyle = 'rgba(191,234,255,.8)'; c.font = '10px "Share Tech Mono", monospace'; c.textAlign = 'center';
     c.beginPath(); c.arc(cx, cy, R, Math.PI, 0); c.stroke();
     for (var i = 0; i <= 10; i++) { var a = Math.PI + i / 10 * Math.PI, r2 = R - (i % 5 === 0 ? 10 : 5); c.beginPath(); c.moveTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); c.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2); c.stroke(); if (i % 5 === 0) c.fillText(String(i / 10 * max), cx + Math.cos(a) * (R - 22), cy + Math.sin(a) * (R - 22) + 3); }
     var ang = Math.PI + v / max * Math.PI; c.strokeStyle = v / max > 0.5 ? '#ffb066' : '#7fe8ff'; c.lineWidth = 2; c.shadowColor = c.strokeStyle; c.shadowBlur = 8;
     c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(ang) * (R - 4), cy + Math.sin(ang) * (R - 4)); c.stroke(); c.shadowBlur = 0; c.fillStyle = '#e9f3ff'; c.beginPath(); c.arc(cx, cy, 3, 0, 6.2832); c.fill();
-    var tx = gw + 22, tw = w - tx - 6; c.strokeStyle = 'rgba(130,190,255,.2)'; c.lineWidth = 1; c.strokeRect(tx, 8, tw, h - 16);
-    c.beginPath(); c.moveTo(tx, h / 2); c.lineTo(tx + tw, h / 2); c.stroke();
-    if (emfHist.length > 1) { c.strokeStyle = '#47d3ff'; c.lineWidth = 1.5; c.beginPath(); emfHist.forEach(function (e, k) { var x = tx + k / 149 * tw, y = h - 10 - Math.min(1, e / max) * (h - 20); if (k) c.lineTo(x, y); else c.moveTo(x, y); }); c.stroke(); }
+    var tx = gw + 22, tw = w - tx - 6; c.save(); c.translate(tx, 8); grid(c, tw, h - 16); trace(c, emfHist, tw, h - 16, max, '#47d3ff'); c.restore();
   }
-  /* spirit box scan display */
+  function drawVib() { var cv = $('#vib-cv'), s = F.sizeCanvas(cv); if (!s) return; s.c.clearRect(0, 0, s.w, s.h); grid(s.c, s.w, s.h); trace(s.c, vibHist, s.w, s.h, 1.2, '#9677ff'); }
+  function drawSnd() {
+    var cv = $('#snd-cv'), s = F.sizeCanvas(cv); if (!s) return; var c = s.c, w = s.w, h = s.h, keys = [['deep', 'DEEP'], ['voice', 'VOICE'], ['high', 'HIGH'], ['ultra', 'ULTRA']];
+    c.clearRect(0, 0, w, h); c.font = '10px "Share Tech Mono", monospace'; c.textAlign = 'center';
+    keys.forEach(function (k, i) { var v = HUB.snap[k[0]], bw = w / 4, f = typeof v === 'number' ? Math.max(0, Math.min(1, (v + 110) / 80)) : 0; c.fillStyle = 'rgba(71,211,255,.8)'; c.fillRect(i * bw + 10, h - 16 - f * (h - 28), bw - 20, f * (h - 28)); c.fillStyle = 'rgba(191,234,255,.7)'; c.fillText(k[1] + (typeof v === 'number' ? '' : ' n/a'), i * bw + bw / 2, h - 3); });
+  }
   function drawSb() {
-    var cv = $('#sb-cv'), s = F.sizeCanvas(cv); if (!s) return; var c = s.c, w = s.w, h = s.h, n = 56, i;
-    c.clearRect(0, 0, w, h);
-    for (i = 0; i < n; i++) { var tgt = boxOn ? Math.random() * 0.7 + (Math.abs(i / n - (sbFreq - 87.5) / 20.5) < 0.04 ? 0.3 : 0) : 0.04; sbBins[i] = (sbBins[i] || 0) * 0.7 + tgt * 0.3; var bh = sbBins[i] * (h - 26); c.fillStyle = 'rgba(71,211,255,.75)'; c.fillRect(i * (w / n) + 1, h - 18 - bh, w / n - 2, bh); }
-    c.fillStyle = 'rgba(191,234,255,.7)'; c.font = '10px "Share Tech Mono", monospace'; c.textAlign = 'center';
-    [88, 92, 96, 100, 104, 108].forEach(function (f) { c.fillText(String(f), (f - 87.5) / 20.5 * w, h - 4); });
-    if (boxOn) { var x = (sbFreq - 87.5) / 20.5 * w; c.strokeStyle = '#ffb066'; c.lineWidth = 2; c.beginPath(); c.moveTo(x, 4); c.lineTo(x, h - 16); c.stroke(); }
-    if (performance.now() < sbUntil) { c.fillStyle = '#ffe0b3'; c.font = '16px "Share Tech Mono", monospace'; c.textAlign = 'left'; c.fillText(sbWord.toUpperCase(), 8, 20); }
+    var cv = $('#sb-cv'), s = F.sizeCanvas(cv); if (!s) return; var c = s.c, w = s.w, h = s.h, n = 64, fd = HUB.bands, i;
+    c.clearRect(0, 0, w, h); c.fillStyle = 'rgba(71,211,255,.75)';
+    for (i = 0; i < n; i++) {
+      var v = 0; if (fd.length) { var lo = Math.floor(Math.pow(i / n, 2) * fd.length * 0.45), hi = Math.floor(Math.pow((i + 1) / n, 2) * fd.length * 0.45) + 1, m = -140, j; for (j = lo; j < hi && j < fd.length; j++) if (fd[j] > m) m = fd[j]; v = Math.max(0, Math.min(1, (m + 110) / 70)); }
+      var bh = Math.max(1, v * (h - 16)); c.fillRect(i * (w / n) + 1, h - 12 - bh, w / n - 2, bh);
+    }
+    c.fillStyle = 'rgba(191,234,255,.6)'; c.font = '10px "Share Tech Mono", monospace'; c.textAlign = 'left'; c.fillText('LOW', 2, h - 1); c.textAlign = 'right'; c.fillText('HIGH', w - 2, h - 1);
+    if (boxOn) { var x = (Math.sin(performance.now() / 700) * 0.5 + 0.5) * w; c.strokeStyle = 'rgba(255,176,102,.8)'; c.lineWidth = 2; c.beginPath(); c.moveTo(x, 2); c.lineTo(x, h - 14); c.stroke(); $('#sb-freq').textContent = 'FM ' + (87.5 + (x / w) * 20.5).toFixed(1); }
+  }
+  /* pendulum */
+  var pd = { on: false, st: { x: 0, y: 0, vx: 0, vy: 0 }, hist: [], last: 0, since: 0 };
+  $('#pd-go').addEventListener('click', function () {
+    if (pd.on) { pd.on = false; this.textContent = 'Start'; return; }
+    if (!HUB.on) { $('#pd-ans').textContent = 'Power up first'; showTab('field'); return; }
+    pd = { on: true, st: { x: 0, y: 0, vx: 0, vy: 0 }, hist: [], last: performance.now(), since: performance.now() }; this.textContent = 'Stop'; $('#pd-ans').innerHTML = '&nbsp;';
+  });
+  function drawPend() {
+    var cv = $('#pd-cv'), s = F.sizeCanvas(cv); if (!s) return; var c = s.c, w = s.w, h = s.h, now = performance.now();
+    if (pd.on) {
+      var dt = Math.min(0.05, (now - pd.last) / 1000); pd.last = now;
+      pd.st = G.pendulumStep(pd.st, HUB.acc.x, HUB.acc.y, dt); pd.hist.push({ x: pd.st.x, y: pd.st.y }); if (pd.hist.length > 150) pd.hist.shift();
+      if (now - pd.since > 4000 && pd.hist.length > 90) { var a = G.pendulumAnswer(pd.hist.slice(-90)); $('#pd-ans').textContent = { yes: 'YES', no: 'NO', circle: 'UNCLEAR', still: '…' }[a]; }
+    }
+    c.clearRect(0, 0, w, h); var cx = w / 2, cy = h / 2, R = Math.min(w, h) * 0.42;
+    c.strokeStyle = 'rgba(130,190,255,.18)'; c.lineWidth = 1; c.beginPath(); c.arc(cx, cy, R, 0, 6.2832); c.moveTo(cx, cy - R); c.lineTo(cx, cy + R); c.moveTo(cx - R, cy); c.lineTo(cx + R, cy); c.stroke();
+    c.fillStyle = 'rgba(191,234,255,.7)'; c.font = '10px "Share Tech Mono", monospace'; c.textAlign = 'center'; c.fillText('YES', cx, cy - R - 4); c.fillText('NO', cx + R + 14, cy + 3);
+    var bx = cx + pd.st.x * R, by = cy - pd.st.y * R;
+    if (pd.hist.length > 2) { c.strokeStyle = 'rgba(150,119,255,.45)'; c.beginPath(); pd.hist.forEach(function (p, i) { var x = cx + p.x * R, y = cy - p.y * R; if (i) c.lineTo(x, y); else c.moveTo(x, y); }); c.stroke(); }
+    c.strokeStyle = 'rgba(191,234,255,.5)'; c.beginPath(); c.moveTo(cx, cy); c.lineTo(bx, by); c.stroke();
+    c.fillStyle = '#c3b2ff'; c.shadowColor = '#9677ff'; c.shadowBlur = 14; c.beginPath(); c.arc(bx, by, 9, 0, 6.2832); c.fill(); c.shadowBlur = 0;
   }
 
   /* ---------- EVP recorder ---------- */
-  var rec = null, recLevels = [], recSec = 0, playing = null, playT = 0;
+  var rec = null, recLevels = [], recSec = 0, playing = null, playT = 0, rfloor = null, lastAuto = 0, autoMark = true;
   var MAXS = G.LIMITS.MAX_CLIP_SEC;
   function renderRecUi() {
     var b = $('#rec-go'), on = !!rec;
@@ -1994,17 +2281,22 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   }
   $('#rec-go').addEventListener('click', function () {
     if (rec) { stopRecording(); return; }
-    stopPlay(); recLevels = []; recSec = 0; $('#rec-msg').textContent = 'Allow the microphone when asked.';
+    stopPlay(); recLevels = []; recSec = 0; rfloor = null; lastAuto = 0; $('#rec-msg').textContent = 'Allow the microphone when asked.';
     var last = 0;
     A.startRecording({
       maxSec: MAXS,
-      onLevel: function (lv) { var n = performance.now(); if (n - last > 40) { recLevels.push(Math.min(1, lv * 1.6)); if (recLevels.length > 600) recLevels.shift(); last = n; } },
+      onLevel: function (lv) {
+        var n = performance.now(); if (n - last > 40) { recLevels.push(Math.min(1, lv * 1.6)); if (recLevels.length > 600) recLevels.shift(); last = n; }
+        if (rfloor == null) rfloor = lv; rfloor = rfloor * 0.995 + Math.min(lv, rfloor * 1.5 + 0.002) * 0.005;
+        if (autoMark && rec && lv > Math.max(0.06, rfloor * 4) && n - lastAuto > 2500) { lastAuto = n; var ms = rec.mark(); $('#rec-msg').textContent = 'Sound marked at ' + fmt(ms) + '.'; }
+      },
       onTick: function (sec) { recSec = sec; $('#rec-time').textContent = fmt(sec) + ' / ' + fmt(MAXS); },
       onAutoStop: function () { stopRecording(); }
     }).then(function (r) { rec = r; $('#rec-msg').textContent = 'Recording. Speak, wait, listen.'; renderRecUi(); }, function (err) {
       $('#rec-msg').textContent = (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) ? 'Microphone permission was not granted. Allow it in the browser or Settings, then try again.' : 'The microphone could not be started here.';
     });
   });
+  $('#rec-auto').addEventListener('click', function () { autoMark = !autoMark; this.setAttribute('aria-pressed', String(autoMark)); });
   $('#rec-mark').addEventListener('click', function () { if (rec) { var s = rec.mark(); toast('Marked at ' + fmt(s)); } });
   function stopRecording() {
     var r = rec; if (!r) return; rec = null;
@@ -2101,7 +2393,8 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
   function slsAnalyse() {
     var v = sls.video, c = sls.sctx; c.drawImage(v, 0, 0, SW, SH);
     var d = c.getImageData(0, 0, SW, SH).data, n = SW * SH, g = new Float32Array(n), i;
-    for (i = 0; i < n; i++) g[i] = d[i * 4] * 0.3 + d[i * 4 + 1] * 0.59 + d[i * 4 + 2] * 0.11;
+    var lsum = 0; for (i = 0; i < n; i++) { g[i] = d[i * 4] * 0.3 + d[i * 4 + 1] * 0.59 + d[i * 4 + 2] * 0.11; lsum += g[i]; }
+    GQSense.feedLight(lsum / n / 255, 'camera');
     if (!sls.bg) { sls.bg = g; return; }
     var thr = 40 - sls.sens * 3, mask = new Uint8Array(n), cnt = 0;
     for (i = 0; i < n; i++) { if (Math.abs(g[i] - sls.bg[i]) > thr) { mask[i] = 1; cnt++; } sls.bg[i] = sls.bg[i] * 0.92 + g[i] * 0.08; }
@@ -2215,7 +2508,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     /* readout */
     c.font = '12px "Share Tech Mono", monospace'; c.fillStyle = '#9dfff0'; c.textAlign = 'left';
     c.fillText('SLS  ' + (tracker ? 'BODIES ' + bodies : 'MOTION ' + Math.round(Math.min(1, sls.frac * 4) * 100) + '%') + '  ACQ ' + sls.acq, 16, 76);
-    c.fillText(new Date().toLocaleTimeString(), 16, 92);
+    c.fillText(new Date().toLocaleTimeString() + (HUB.on ? '  INDEX ' + (HUB.base ? HUB.index : '--') : ''), 16, 92);
     if (sls.shake > 0 && !tracker) { c.textAlign = 'center'; c.fillStyle = '#ffd48a'; c.fillText('HOLD STEADY', w / 2, h / 2); }
     c.strokeStyle = 'rgba(157,255,240,.5)'; c.lineWidth = 1.5; var L = 22, mg = 12;
     [[mg, mg, 1, 1], [w - mg, mg, -1, 1], [mg, h - mg, 1, -1], [w - mg, h - mg, -1, -1]].forEach(function (q) { c.beginPath(); c.moveTo(q[0], q[1] + q[3] * L); c.lineTo(q[0], q[1]); c.lineTo(q[0] + q[2] * L, q[1]); c.stroke(); });
@@ -2332,7 +2625,7 @@ details.dd summary { cursor: pointer; min-height: 44px; display: flex; align-ite
     new ResizeObserver(layout).observe($('#stage'));
     var ok = false; try { ok = localStorage.getItem(OKKEY) === '1'; } catch (e) { /* ignore */ }
     if (!ok) setTimeout(showWelcome, 300);
-    window.__gq = { state: function () { return S; }, sls: function () { return { acq: sls.acq, seen: sls.seen, frac: sls.frac, box: sls.box, ui: sls.ui }; } };
+    window.__gq = { hub: HUB, state: function () { return S; }, sls: function () { return { acq: sls.acq, seen: sls.seen, frac: sls.frac, box: sls.box, ui: sls.ui }; } };
   }
   boot();
 })();

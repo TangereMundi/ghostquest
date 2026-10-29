@@ -1,6 +1,6 @@
 /* GhostQuest service worker: keeps the game working offline.
    Bump VERSION whenever you publish new files so phones pick them up. */
-const VERSION = 'gq-v3';
+const VERSION = 'gq-v4';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'assets/world.jpg', 'assets/wordmark.png', 'assets/logo.jpg', 'assets/icon.jpg', 'icons/icon-192.png', 'icons/icon-512.png'];
 const AI = 'gq-ai-v1', TILES = 'gq-tiles-v1', TILE_LIMIT = 300; /* only tiles the player has actually looked at; no bulk downloading */
 
